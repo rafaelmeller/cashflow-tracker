@@ -21,33 +21,43 @@ class CashFlowTracker:
         self.budgets = {}
 
 
-    def add_transaction(self, transaction):
+    def add(self, transaction):
         self.transactions.append(transaction)
         return self.transactions
 
 
-    def categorize_transactions(self, transaction, category):
+    def categorize(self, transaction, category):
         transaction.category = category
         return transaction
 
 
-    def filter_transactions(self, filtering_condition):
-        if isinstance(filtering_condition, tuple):
-            start_date, end_date = filtering_condition
-            return [t for t in self.transactions if start_date <= t.date <= end_date]
-        elif isinstance(filtering_condition, str):
-            return [t for t in self.transactions if t.category == filtering_condition]
-        else:
-            raise ValueError("Invalid filtering condition.")
+    def filter(self, date_tuple=None, category=None, type=None):
+        filtered_transactions = self.transactions
+        if date_tuple:
+            start_date, end_date = date_tuple
+            filtered_transactions = [t for t in filtered_transactions if start_date <= t.date <= end_date]
+        if category:
+            filtered_transactions = [t for t in filtered_transactions if t.category == category]
+        if type:
+            if type == "income":
+                filtered_transactions = [t for t in filtered_transactions if t.value > 0]
+            else:
+                filtered_transactions = [t for t in filtered_transactions if t.value < 0]
+        
+        filtered_cashflowtracker = CashFlowTracker()
+        for transaction in filtered_transactions:
+            filtered_cashflowtracker.add(transaction)
+
+        return filtered_cashflowtracker
 
     
-    def generate_summary(self):
+    def summary(self):
         # TODO
         ...
     # Calculates totals for incomes, expenses, and by category.
 
 
-    def set_budget(self, category, amount):
+    def budget(self, category, amount):
         # TODO
         ...
 
@@ -67,12 +77,11 @@ def main():
             print("Here's the menu:")
             print("1. Import transactions from CSV file")
             print("2. Add new transaction manually")
-            print("3. Choose category for transactions")
-            print("5. Set budget for each category")
-            print("4. Generate filtered summary")
+            print("3. Choose a category for your transactions")
+            print("4. Generate filtered list of transactions")
             print("5. Set budget for each category")
             print("6. View budget report")  
-            print("7. Export summary or report to a CSV or Excel file")
+            print("7. Export summary, list or report to a CSV or Excel file")
             print("8. Exit")
 
             main_choice = input("Enter the number of your choice: ").strip()
@@ -85,7 +94,7 @@ def main():
                         continue
                     try:
                         for transaction in read_csv(path):
-                            cashflowtracker.add_transaction(transaction)
+                            cashflowtracker.add(transaction)
                         print("Transactions have been imported successfully.")
 
                     except ValueError as e:
@@ -126,10 +135,10 @@ def main():
 
                             try:
                                 for transaction in read_csv(path, date, description, value):
-                                    cashflowtracker.add_transaction(transaction)
+                                    cashflowtracker.add(transaction)
                                 print("Transactions have been imported successfully.")
                             except ValueError as e:
-                                print("Error: {e}")
+                                print(f"Error: {e}")
                                 continue
                     
             elif main_choice == "2":
@@ -143,12 +152,12 @@ def main():
 
                 while True:
                     print("Now the category.")
-                    categories == None
+                    categories = None
 
                     # TODO: Review this part
                     categories = set([t.category for t in cashflowtracker.transactions])
 
-                    if categories == None:
+                    if not categories:
                         print("There are no categories being used yet.")
                         print("Type one for your transaction.")
                         category = input("Category: ").strip()
@@ -180,7 +189,7 @@ def main():
                         continue
         
                 transaction = Transaction(date, category, description, value)
-                cashflowtracker.add_transaction(transaction)
+                cashflowtracker.add(transaction)
 
             elif main_choice == "3":
                 while True:
@@ -189,40 +198,120 @@ def main():
                     print("2. If you want to change a category already in use")
                     sub_choice_3 = input("Enter your choice: ").strip()
                     if sub_choice_3 == "1":
-                        grouped_uncategorized = get_transactions_from_category(cashflowtracker)
+                        grouped_uncategorized = group_uncategorized(cashflowtracker)
                         for description, transactions in grouped_uncategorized.items():
                             print(f"Transactions with description: {description}")
                             for transaction in transactions:
                                 print(transaction)
                             category = input("Enter the category for the above transactions: ").strip()
                             for transaction in transactions:
-                                cashflowtracker.categorize_transactions(transaction, category)
+                                cashflowtracker.categorize(transaction, category)
                             print(f"All transactions with description '{description}' have been categorized as '{category}'.")
                         break
                     elif sub_choice_3 == "2":
                         category = input("Enter the category you want to filter transactions by: ").strip()
+                        filtered_transactions = cashflowtracker.filter(category=category)
 
-                        # TODO: Review this part
-                        filtered_transactions = get_transactions_from_category(cashflowtracker, category)
-                        
-                        for description, transactions in filtered_transactions.items():
-                            print(f"Transactions with description: {description}")
-                            for transaction in transactions:
-                                print(transaction)
-                            category = input("Enter the category for the above transactions: ").strip()
-                            for transaction in transactions:
-                                cashflowtracker.categorize_transactions(transaction, category)
-                            print(f"All transactions with description '{description}' have been categorized as '{category}'.")
-                        break
+                        if not filtered_transactions:
+                            print(f"No transactions found for category '{category}'.")
+                            continue     
+                        else:
+                            for description, transactions in filtered_transactions.items():
+                                print(f"Transactions with description: {description}")
+                                for transaction in transactions:
+                                    print(transaction)
+                                new_category = input("Enter the new category for the above transactions: ").strip()
+                                for transaction in transactions:
+                                    cashflowtracker.categorize(transaction, new_category)
+                                print(f"All transactions with description '{description}' have been categorized as '{category}'.")
+                            break
                     else:
                         print("Invalid choice, please check menu and choose the desired action.")
                         continue
 
             elif main_choice == "4":
-                # TODO:
                 # Generate filtered summary
                 # Remember to datetime.strptime(date, "%Y-%m-%d")
-                pass
+                while True:
+                    print("Now please choose the filtering parameters for your transaction list:")
+                    date_bool = input("Do you want to filter by date range (y/n)? ").strip().lower()
+                    if date_bool == "y":
+
+                        while True:
+                            start_date = input("Enter the start date (YYYY-MM-DD): ").strip()
+                            if not re.match(r"^\d{4}-\d{2}-\d{2}$", start_date):
+                                print("Invalid date format. Please enter a valid date.")
+                                continue
+                            else:
+                                break
+
+                        while True:
+                            end_date = input("Enter the end date (YYYY-MM-DD): ").strip()
+                            if not re.match(r"^\d{4}-\d{2}-\d{2}$", end_date):
+                                print("Invalid date format. Please enter a valid date.")
+                                continue
+                            else:
+                                break
+                        date_filter = (datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
+                    elif date_bool == "n":
+                        date_filter = None
+                        break
+                    else:
+                        print("Invalid choice. Please choose the desired action.")
+                        continue
+
+                    while True:
+                        category_bool = input("Do you want to filter by category (y/n)? ").strip().lower()
+                        if category_bool == "y":
+                            categories = set([t.category for t in cashflowtracker.transactions])
+
+                            while True:
+                                list_bool = input("Do you want to see a list of the existing categories (y/n)?").strip().lower()
+                                if list_bool == "y":
+                                    for index, category in enumerate(categories):
+                                        print(f"{index + 1}. {category}")
+                                    break
+                                elif list_bool == "n":
+                                    break
+                                else:
+                                    print("Invalid choice. Please choose the desired action.")
+                                    continue
+
+                            while True:
+                                category_filter = input("Enter the category you want to filter by: ").strip()
+                                if category_filter not in categories:
+                                    print("Invalid category. Please enter a valid category.")
+                                    continue
+                                else:
+                                    break
+                        elif category_bool == "n":
+                            break
+                        else:
+                            print("Invalid choice. Please choose the desired action.")
+                            continue
+
+                    while True:
+                        type_bool = input("Do you want to filter by type (income or expense) (y/n)? ").strip().lower()
+                        if type_bool == "y":
+                            while True:
+                                type_filter = input("Enter the type you want to filter by (income or expense): ").strip().lower()
+                                if type_filter not in ["income", "expense"]:
+                                    print("Invalid type. Please enter a valid type.")
+                                    continue
+                                else:
+                                    break
+                        elif type_bool == "n":
+                            break
+                        else:
+                            print("Invalid choice. Please choose the desired action.")
+                            continue
+                filtered_transactions_obj = cashflowtracker.filter(date_filter, category_filter, type_filter)
+                print("Your filtered transaction list is ready. Please choose an option:")
+                print("1. View the list")
+                print("2. View a summary of the list")
+                print("3. Export this list to a CSV or Excel file")
+                # TODO: Continue this part           
+                    
 
             elif main_choice == "5":
                 # TODO:
@@ -288,21 +377,18 @@ def read_csv(path, date="date", description="description", value="value"):
             yield transaction
 
 
-def get_transactions_from_category(cashflowtracker, choice=None):
-    if choice:
-        return cashflowtracker.filter_transactions(choice)
-    else:
-        # Filter transactions that are uncategorized
-        uncategorized = [t for t in cashflowtracker.transactions if t.category == ""]
-        
-        # Group uncategorized transactions by description
-        grouped_uncategorized = {}
-        for transaction in uncategorized:
-            if transaction.description not in grouped_uncategorized:
-                grouped_uncategorized[transaction.description] = []
-            grouped_uncategorized[transaction.description].append(transaction)
-        
-        return grouped_uncategorized
+def group_uncategorized(cashflowtracker):
+    # Filter transactions that are uncategorized
+    uncategorized = [t for t in cashflowtracker.transactions if t.category == ""]
+    
+    # Group uncategorized transactions by description
+    grouped_uncategorized = {}
+    for transaction in uncategorized:
+        if transaction.description not in grouped_uncategorized:
+            grouped_uncategorized[transaction.description] = []
+        grouped_uncategorized[transaction.description].append(transaction)
+    
+    return grouped_uncategorized
 
 
 def export_summary():
