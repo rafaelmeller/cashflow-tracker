@@ -1,6 +1,8 @@
 import csv
 from datetime import datetime
 import re
+import pandas as pd
+from tabulate import tabulate
 
 
 class Transaction:
@@ -62,10 +64,22 @@ class CashFlowTracker:
         ...
 
 
-    def __str__(self):
-        # TODO
-        ...
+    def dataframe(self):
+        data = {
+            "Date": [t.date for t in self.transactions],
+            "Category": [t.category for t in self.transactions],
+            "Description": [t.description for t in self.transactions],
+            "Value": [t.value for t in self.transactions]
+        }
+        df = pd.DataFrame(data)
+        return df
 
+
+    def __str__(self):
+        if not self.transactions:
+            return "No transactions registered yet."
+        df = self.dataframe()
+        return tabulate(df, headers="keys", tablefmt="grid", showindex=False)
 
 
 def main():
@@ -87,6 +101,7 @@ def main():
             main_choice = input("Enter the number of your choice: ").strip()
 
             if main_choice == "1":
+                # Import transactions from CSV file
                 while True:
                     path = input("Enter the path to the CSV file: ").strip()
                     if not path.endswith(".csv"):
@@ -142,6 +157,7 @@ def main():
                                 continue
                     
             elif main_choice == "2":
+                # Add new transaction manually
                 print("Enter the details of the transaction:")
                 while True:
                     date = input("Date (YYYY-MM-DD): ").strip()
@@ -192,8 +208,9 @@ def main():
                 cashflowtracker.add(transaction)
 
             elif main_choice == "3":
+                # Choose category of transactions
                 while True:
-                    # Choose category of transactions
+                    print("Choose an option:")
                     print("1. If you want to categorize uncategorized transactions")
                     print("2. If you want to change a category already in use")
                     sub_choice_3 = input("Enter your choice: ").strip()
@@ -230,8 +247,7 @@ def main():
                         continue
 
             elif main_choice == "4":
-                # Generate filtered summary
-                # Remember to datetime.strptime(date, "%Y-%m-%d")
+                # Generate filtered list of transactions
                 while True:
                     print("Now please choose the filtering parameters for your transaction list:")
                     date_bool = input("Do you want to filter by date range (y/n)? ").strip().lower()
@@ -315,7 +331,7 @@ def main():
 
             elif main_choice == "5":
                 # TODO:
-                # choose budget for each category
+                # Set budget for each category
                 pass
 
             elif main_choice == "6":
