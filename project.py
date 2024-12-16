@@ -1,7 +1,8 @@
 import csv
 from datetime import datetime
-import re
+from dateutil.parser import parse
 import pandas as pd
+import re
 from tabulate import tabulate
 
 
@@ -54,10 +55,52 @@ class CashFlowTracker:
 
     
     def summary(self):
-        # TODO
-        ...
-    # Calculates totals for incomes, expenses, and by category.
+        # Calculates totals for incomes, expenses, and by category.
+        start_date = min([t.date for t in self.transactions])
+        end_date = max([t.date for t in self.transactions])
+        period = end_date - start_date
+        categories = set(t.category if t.category else "Uncategorized" for t in self.transactions)
+        income_categories = {}
+        expense_categories = {}
+        total_income = 0
+        total_expense = 0
+        
+        for category in categories:
+            total_category = sum([t.value for t in self.transactions if t.category == category])
+            if total_category > 0:
+                income_categories[category] = total_category
+                total_income += total_category
+            else:
+                expense_categories[category] = total_category
+                total_expense += total_category
+        
+        total_balance = total_income + total_expense
+        average_daily_income = total_income / period.days
+        average_daily_expense = total_expense / period.days
 
+        summary = {
+            "period": f"From {start_date} to {end_date} ({period.days} days)",
+            "Total Income": total_income,
+            "Total Expense": total_expense,
+            "Total Balance": total_balance,
+            "Average Daily Income": average_daily_income,
+            "Average Daily Expense": average_daily_expense
+        }
+
+        summary_table = [[key, value] for key, value in summary.items()]
+
+        if income_categories:
+            summary_table.append(["Income by Category", ""])
+            for category, total in income_categories.items():
+                summary_table.append([category, total])
+
+        if expense_categories:
+            summary_table.append(["Expense by Category", ""])
+            for category, total in expense_categories.items():
+                summary_table.append([category, total])
+
+        return tabulate(summary_table, headers=["Summary", "Value"], tablefmt="grid")
+ 
 
     def budget(self, category, amount):
         # TODO
@@ -82,13 +125,14 @@ class CashFlowTracker:
         return tabulate(df, headers="keys", tablefmt="grid", showindex=False)
 
 
-def main():
+def main(): 
     cashflowtracker = CashFlowTracker()
+    print()
     print("Welcome to CashFlow Tracker!")
-    print("(Press Ctrl+C to exit the program at any time.)")
     try:
         while True:
             print("Here's the menu:")
+            print()
             print("1. Import transactions from CSV file")
             print("2. Add new transaction manually")
             print("3. Choose a category for your transactions")
@@ -97,6 +141,8 @@ def main():
             print("6. View budget report")  
             print("7. Export summary, list or report to a CSV or Excel file")
             print("8. Exit")
+            print("(Press Ctrl+C to exit the program at any time)")
+            print()
 
             main_choice = input("Enter the number of your choice: ").strip()
 
@@ -111,6 +157,7 @@ def main():
                         for transaction in read_csv(path):
                             cashflowtracker.add(transaction)
                         print("Transactions have been imported successfully.")
+                        break
 
                     except ValueError as e:
                         print(f"Error: {e}")
@@ -249,7 +296,7 @@ def main():
             elif main_choice == "4":
                 # Generate filtered list of transactions
                 while True:
-                    print("Now please choose the filtering parameters for your transaction list:")
+                    print("Now please choose the filtering parameters for your transaction table:")
                     date_bool = input("Do you want to filter by date range (y/n)? ").strip().lower()
                     if date_bool == "y":
 
@@ -322,11 +369,27 @@ def main():
                             print("Invalid choice. Please choose the desired action.")
                             continue
                 filtered_transactions_obj = cashflowtracker.filter(date_filter, category_filter, type_filter)
-                print("Your filtered transaction list is ready. Please choose an option:")
-                print("1. View the list")
-                print("2. View a summary of the list")
-                print("3. Export this list to a CSV or Excel file")
-                # TODO: Continue this part           
+                print("Your filtered transaction table is ready")
+                while True:
+                    print("Please choose an option:")
+                    print("1. View the table")
+                    print("2. View a summary of the table")
+                    print("3. Export this table to a CSV or Excel file")
+                    sub_choice_4 = input("Enter your choice: ").strip()
+                    if sub_choice_4 == "1":
+                        print(filtered_transactions_obj)
+                        break
+                    elif sub_choice_4 == "2":
+                        print(filtered_transactions_obj.summary())
+                        break
+                    elif sub_choice_4 == "3":
+                        # TODO: Continue this part
+                        # export_data(filtered_transactions_obj)
+                        break
+                    else:
+                        print("Invalid choice, please check menu and choose the desired action.")
+                        continue
+                           
                     
 
             elif main_choice == "5":
@@ -341,7 +404,7 @@ def main():
 
             elif main_choice == "7":
                 # TODO:
-                # Export summary
+                # Export summary, list or report to a CSV or Excel file
                 pass
 
             elif main_choice == "8":
@@ -352,24 +415,26 @@ def main():
                 print("Invalid choice, please check menu and choose the desired action.")
                 continue
     except KeyboardInterrupt:
-        print("Operation cancelled by the user, saving changes...")
+        print()
+        print("\nOperation cancelled by the user, saving changes...")
+        print()
 
         # TODO: Save cashflowtracker to a CSV file
         print("Changes saved sucessfully.")
-
         print("Thank you for using CashFlow Tracker. Goodbye!")
         exit(0)
 
 
 def read_csv(path, date="date", description="description", value="value"):
     # Setting defaut or custom values for the fields
-    date_field = date
-    description_field = description
-    value_field = value
+    date_field = date.lower()
+    description_field = description.lower()
+    value_field = value.lower()
 
     with open(path, newline='') as file:
         reader = csv.reader(file)
         header = next(reader)
+        header = [h.lower() for h in header]
         try:
             date_index = header.index(date_field)
         except ValueError:
@@ -386,7 +451,11 @@ def read_csv(path, date="date", description="description", value="value"):
             raise ValueError("'description' column not found in CSV file.")
 
         for row in reader:
-            date = row[date_index]
+            date_str = row[date_index]
+            try:
+                date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
+            except ValueError:
+                date = parse(date_str).strftime("%Y-%m-%d")
             value = float(row[value_index])
             description = row[description_index]
             transaction = Transaction(date, "", description, value)
@@ -407,9 +476,21 @@ def group_uncategorized(cashflowtracker):
     return grouped_uncategorized
 
 
-def export_summary():
-    # TODO: Create a function to export the summary to a CSV or Excel file.
-    ...
+def export_data(data):
+    # TODO: Continue this part
+
+    if isinstance(data, list):
+        ...
+    elif isinstance(data, CashFlowTracker):
+        ...
+    elif isinstance(data, dict):
+        ...
+    elif isinstance(data, str) and data.startswith("+") and data.endswith("+"):
+        ...
+    elif isinstance(data, pd.DataFrame):
+        ...
+    else:
+        print("Invalid data type. Please enter a valid data type.")
 
 
 if __name__ == "__main__":
