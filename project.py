@@ -156,7 +156,9 @@ def main():
                     try:
                         for transaction in read_csv(path):
                             cashflowtracker.add(transaction)
+                        print()
                         print("Transactions have been imported successfully.")
+                        print()
                         break
 
                     except ValueError as e:
@@ -295,33 +297,37 @@ def main():
 
             elif main_choice == "4":
                 # Generate filtered list of transactions
+                main_bool = []
                 while True:
                     print("Now please choose the filtering parameters for your transaction table:")
-                    date_bool = input("Do you want to filter by date range (y/n)? ").strip().lower()
-                    if date_bool == "y":
+                    while True:
+                        date_bool = input("Do you want to filter by date range (y/n)? ").strip().lower()
+                        if date_bool == "y":
 
-                        while True:
-                            start_date = input("Enter the start date (YYYY-MM-DD): ").strip()
-                            if not re.match(r"^\d{4}-\d{2}-\d{2}$", start_date):
-                                print("Invalid date format. Please enter a valid date.")
-                                continue
-                            else:
-                                break
+                            while True:
+                                start_date = input("Enter the start date (YYYY-MM-DD): ").strip()
+                                if not re.match(r"^\d{4}-\d{2}-\d{2}$", start_date):
+                                    print("Invalid date format. Please enter a valid date.")
+                                    continue
+                                else:
+                                    break
 
-                        while True:
-                            end_date = input("Enter the end date (YYYY-MM-DD): ").strip()
-                            if not re.match(r"^\d{4}-\d{2}-\d{2}$", end_date):
-                                print("Invalid date format. Please enter a valid date.")
-                                continue
-                            else:
-                                break
-                        date_filter = (datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
-                    elif date_bool == "n":
-                        date_filter = None
-                        break
-                    else:
-                        print("Invalid choice. Please choose the desired action.")
-                        continue
+                            while True:
+                                end_date = input("Enter the end date (YYYY-MM-DD): ").strip()
+                                if not re.match(r"^\d{4}-\d{2}-\d{2}$", end_date):
+                                    print("Invalid date format. Please enter a valid date.")
+                                    continue
+                                else:
+                                    break
+                            date_filter = (datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
+                            main_bool.append("date")
+                        elif date_bool == "n":
+                            date_filter = None
+                            main_bool.append("date")
+                            break
+                        else:
+                            print("Invalid choice. Please choose the desired action.")
+                            continue
 
                     while True:
                         category_bool = input("Do you want to filter by category (y/n)? ").strip().lower()
@@ -346,8 +352,11 @@ def main():
                                     print("Invalid category. Please enter a valid category.")
                                     continue
                                 else:
+                                    main_bool.append("category")
                                     break
                         elif category_bool == "n":
+                            category_filter = None
+                            main_bool.append("category")
                             break
                         else:
                             print("Invalid choice. Please choose the desired action.")
@@ -362,12 +371,17 @@ def main():
                                     print("Invalid type. Please enter a valid type.")
                                     continue
                                 else:
+                                    main_bool.append("type")
                                     break
                         elif type_bool == "n":
+                            type_filter = None
+                            main_bool.append("type")
                             break
                         else:
                             print("Invalid choice. Please choose the desired action.")
                             continue
+                    if main_bool == ["date", "category", "type"]:
+                        break
                 filtered_transactions_obj = cashflowtracker.filter(date_filter, category_filter, type_filter)
                 print("Your filtered transaction table is ready")
                 while True:
