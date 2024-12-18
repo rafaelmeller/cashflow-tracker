@@ -8,7 +8,7 @@ from tabulate import tabulate
 
 class Transaction:
     def __init__(self, date, category, description, value):
-        self.date = datetime.strptime(date, "%Y-%m-%d")
+        self.date = datetime.strptime(date, "%Y-%m-%d").date()
         self.category = category
         self.description = description
         self.value = value
@@ -59,47 +59,39 @@ class CashFlowTracker:
         start_date = min([t.date for t in self.transactions])
         end_date = max([t.date for t in self.transactions])
         period = end_date - start_date
-        categories = set(t.category if t.category else "Uncategorized" for t in self.transactions)
-        income_categories = {}
-        expense_categories = {}
+        categories = set([t.category for t in self.transactions])
+        if categories == {""}:
+            total_income = sum([t.value for t in self.transactions if t.value > 0])
+            total_expense = sum([t.value for t in self.transactions if t.value < 0])
+            total_balance = total_income + total_expense
+            average_daily_income = total_income / period.days
+            average_daily_expense = total_expense / period.days
         total_income = 0
         total_expense = 0
-        
+
         for category in categories:
-            total_category = sum([t.value for t in self.transactions if t.category == category])
-            if total_category > 0:
-                income_categories[category] = total_category
-                total_income += total_category
-            else:
-                expense_categories[category] = total_category
-                total_expense += total_category
+            total_category_income = sum([t.value for t in self.transactions if t.category == category and t.value > 0])
+            total_category_expense = sum([t.value for t in self.transactions if t.category == category and t.value < 0])
+            total_income += total_category_income
+            total_expense += total_category_expense
         
         total_balance = total_income + total_expense
         average_daily_income = total_income / period.days
         average_daily_expense = total_expense / period.days
 
         summary = {
-            "period": f"From {start_date} to {end_date} ({period.days} days)",
-            "Total Income": total_income,
-            "Total Expense": total_expense,
-            "Total Balance": total_balance,
-            "Average Daily Income": average_daily_income,
-            "Average Daily Expense": average_daily_expense
+            "Period": f"From {start_date} to {end_date}",
+            "Duration": f"({period.days} days)",
+            "Average Daily Income": f"{average_daily_income:.2f}",
+            "Total Income": f"{total_income:.2f}",
+            "Average Daily Expense": f"{average_daily_expense:.2f}",
+            "Total Expense": f"{total_expense:.2f}",
+            "Total Balance": f"{total_balance:.2f}"
         }
 
         summary_table = [[key, value] for key, value in summary.items()]
 
-        if income_categories:
-            summary_table.append(["Income by Category", ""])
-            for category, total in income_categories.items():
-                summary_table.append([category, total])
-
-        if expense_categories:
-            summary_table.append(["Expense by Category", ""])
-            for category, total in expense_categories.items():
-                summary_table.append([category, total])
-
-        return tabulate(summary_table, headers=["Summary", "Value"], tablefmt="grid")
+        return tabulate(summary_table, tablefmt="grid")
  
 
     def budget(self, category, amount):
@@ -122,6 +114,8 @@ class CashFlowTracker:
         if not self.transactions:
             return "No transactions registered yet."
         df = self.dataframe()
+        df = df.sort_values("Date")
+        df["Value"] = df["Value"].apply(lambda x: f"{x:.2f}")
         return tabulate(df, headers="keys", tablefmt="grid", showindex=False)
 
 
@@ -131,8 +125,7 @@ def main():
     print("Welcome to CashFlow Tracker!")
     try:
         while True:
-            print("Here's the menu:")
-            print()
+            print("Menu:")
             print("1. Import transactions from CSV file")
             print("2. Add new transaction manually")
             print("3. Choose a category for your transactions")
@@ -160,7 +153,9 @@ def main():
                         print("Transactions have been imported successfully.")
                         print()
                         break
-
+                    except FileNotFoundError:
+                        print("File not found. Please enter a valid path.")
+                        continue
                     except ValueError as e:
                         print(f"Error: {e}")
                         print("To fix this, we have to custom the values for the fields")
@@ -210,7 +205,7 @@ def main():
                 print("Enter the details of the transaction:")
                 while True:
                     date = input("Date (YYYY-MM-DD): ").strip()
-                    if not re.match(r"^\d{4}-\d{2}-\d{2}$", date):
+                    if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", date):
                         print("Invalid date format. Please enter a valid date.")
                         continue
                     break
@@ -222,16 +217,18 @@ def main():
                     # TODO: Review this part
                     categories = set([t.category for t in cashflowtracker.transactions])
 
-                    if not categories:
+                    if categories == {""}:
                         print("There are no categories being used yet.")
                         print("Type one for your transaction.")
                         category = input("Category: ").strip()
                         break
                     else:
                         print("Here is the list of the already existing categories:")
-                        for index, category in enumerate(categories):
-                            print(f"{index + 1}. {category}")
-                        print("Type one for your transaction.")
+                        for category in categories:
+                            if category == "":
+                                continue
+                            print(f"- {category}")
+                        print("Type a name for your transaction.")
                         category = input("Category: ").strip()
                         break  
 
@@ -306,7 +303,7 @@ def main():
 
                             while True:
                                 start_date = input("Enter the start date (YYYY-MM-DD): ").strip()
-                                if not re.match(r"^\d{4}-\d{2}-\d{2}$", start_date):
+                                if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", start_date):
                                     print("Invalid date format. Please enter a valid date.")
                                     continue
                                 else:
@@ -314,13 +311,14 @@ def main():
 
                             while True:
                                 end_date = input("Enter the end date (YYYY-MM-DD): ").strip()
-                                if not re.match(r"^\d{4}-\d{2}-\d{2}$", end_date):
+                                if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", end_date):
                                     print("Invalid date format. Please enter a valid date.")
                                     continue
                                 else:
                                     break
-                            date_filter = (datetime.strptime(start_date, "%Y-%m-%d"), datetime.strptime(end_date, "%Y-%m-%d"))
+                            date_filter = (datetime.strptime(start_date, "%Y-%m-%d").date(), datetime.strptime(end_date, "%Y-%m-%d").date())
                             main_bool.append("date")
+                            break
                         elif date_bool == "n":
                             date_filter = None
                             main_bool.append("date")
@@ -389,16 +387,19 @@ def main():
                     print("1. View the table")
                     print("2. View a summary of the table")
                     print("3. Export this table to a CSV or Excel file")
+                    print("4. Go back to the main menu")
                     sub_choice_4 = input("Enter your choice: ").strip()
                     if sub_choice_4 == "1":
                         print(filtered_transactions_obj)
-                        break
+                        continue
                     elif sub_choice_4 == "2":
                         print(filtered_transactions_obj.summary())
-                        break
+                        continue
                     elif sub_choice_4 == "3":
                         # TODO: Continue this part
                         # export_data(filtered_transactions_obj)
+                        continue
+                    elif sub_choice_4 == "4":
                         break
                     else:
                         print("Invalid choice, please check menu and choose the desired action.")
@@ -422,6 +423,7 @@ def main():
                 pass
 
             elif main_choice == "8":
+                print()
                 print("Thank you for using CashFlow Tracker. Goodbye!")
                 break
 
@@ -431,11 +433,11 @@ def main():
     except KeyboardInterrupt:
         print()
         print("\nOperation cancelled by the user, saving changes...")
-        print()
 
         # TODO: Save cashflowtracker to a CSV file
         print("Changes saved sucessfully.")
         print("Thank you for using CashFlow Tracker. Goodbye!")
+        print()
         exit(0)
 
 
@@ -464,16 +466,32 @@ def read_csv(path, date="date", description="description", value="value"):
         except ValueError:
             raise ValueError("'description' column not found in CSV file.")
 
-        for row in reader:
-            date_str = row[date_index]
-            try:
-                date = datetime.strptime(date_str, "%Y-%m-%d").strftime("%Y-%m-%d")
-            except ValueError:
-                date = parse(date_str).strftime("%Y-%m-%d")
-            value = float(row[value_index])
-            description = row[description_index]
-            transaction = Transaction(date, "", description, value)
-            yield transaction
+        date_list = [next(reader)[date_index] for _ in range(30)]
+        date_format = check_date_format(date_list)
+
+        if date_format is None:
+            raise ValueError("'date' format couldn't be identified.")
+        
+        file.seek(0)
+        next(reader)
+
+        try:
+            if date_format == "dayfirst":
+                for row in reader:
+                    date_str = row[date_index]
+                    date = parse(date_str, dayfirst=True).strftime("%Y-%m-%d")
+            else:
+                for row in reader:
+                    date_str = row[date_index]
+                    date = parse(date_str, dayfirst=False).strftime("%Y-%m-%d")
+    
+        except ValueError:
+            raise ValueError("'date' format should be one of the following: 'YYYY-MM-DD', 'MM-DD-YYYY', 'DD-MM-YYYY'")
+
+        value = float(row[value_index])
+        description = row[description_index]
+        transaction = Transaction(date, "", description, value)
+        yield transaction
 
 
 def group_uncategorized(cashflowtracker):
@@ -488,6 +506,25 @@ def group_uncategorized(cashflowtracker):
         grouped_uncategorized[transaction.description].append(transaction)
     
     return grouped_uncategorized
+
+
+def check_date_format(date_list):
+    patterns = {
+        "yearfirst": r"^\d{4}[-/](0[1-9]|1[012])[-/](0[1-9]|[12][0-9]|3[01])$",
+        "monthfirst": r"^(0[1-9]|1[012])[-/](0[1-9]|[12][0-9]|3[01])[-/]\d{4}$",
+        "dayfirst": r"^(0[1-9]|[12][0-9]|3[01])[-/](0[1-9]|1[012])[-/]\d{4}$"
+    }
+
+    matching_patterns = []
+
+    for key, pattern in patterns.items():
+        if all(re.match(pattern, date) for date in date_list):
+            matching_patterns.append(key)
+
+    if len(matching_patterns) == 1:
+        return matching_patterns[0]
+    else:
+        return None
 
 
 def export_data(data):
