@@ -131,7 +131,7 @@ def main():
             print("3. Choose a category for your transactions")
             print("4. Generate filtered list of transactions")
             print("5. Set budget for each category")
-            print("6. View budget report")  
+            print("6. View your data (complete table, filtered list or budget report)")  
             print("7. Export summary, list or report to a CSV or Excel file")
             print("8. Exit")
             print("(Press Ctrl+C to exit the program at any time)")
@@ -155,6 +155,7 @@ def main():
                         break
                     except FileNotFoundError:
                         print("File not found. Please enter a valid path.")
+                        print()
                         continue
                     except ValueError as e:
                         print(f"Error: {e}")
@@ -172,6 +173,7 @@ def main():
                                     break
                                 except ValueError:
                                     print("Invalid column number. Please enter a valid number.")
+                                    print()
                                     continue
 
                             while True:
@@ -181,6 +183,7 @@ def main():
                                     break
                                 except ValueError:
                                     print("Invalid column number. Please enter a valid number.")
+                                    print()
                                     continue
                             
                             while True:
@@ -190,14 +193,17 @@ def main():
                                     break
                                 except ValueError:
                                     print("Invalid column number. Please enter a valid number.")
+                                    print()
                                     continue
 
                             try:
                                 for transaction in read_csv(path, date, description, value):
                                     cashflowtracker.add(transaction)
                                 print("Transactions have been imported successfully.")
+                                print()
                             except ValueError as e:
                                 print(f"Error: {e}")
+                                print()
                                 continue
                     
             elif main_choice == "2":
@@ -207,6 +213,7 @@ def main():
                     date = input("Date (YYYY-MM-DD): ").strip()
                     if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", date):
                         print("Invalid date format. Please enter a valid date.")
+                        print()
                         continue
                     break
 
@@ -236,6 +243,7 @@ def main():
                     description = input("Description: ").strip()
                     if not description:
                         print("Description cannot be empty. Please enter a valid description.")
+                        print()
                         continue
                     break
 
@@ -248,6 +256,7 @@ def main():
                         break
                     except ValueError:
                         print("Invalid value. Please enter a valid value.")
+                        print()
                         continue
         
                 transaction = Transaction(date, category, description, value)
@@ -271,25 +280,26 @@ def main():
                                 cashflowtracker.categorize(transaction, category)
                             print(f"All transactions with description '{description}' have been categorized as '{category}'.")
                         break
+
+                    # TODO: Review this part
                     elif sub_choice_3 == "2":
                         category = input("Enter the category you want to filter transactions by: ").strip()
-                        filtered_transactions = cashflowtracker.filter(category=category)
-
-                        if not filtered_transactions:
+                        temporary_filtered = cashflowtracker.filter(category=category)
+                        if not temporary_filtered.transactions:
                             print(f"No transactions found for category '{category}'.")
                             continue     
                         else:
-                            for description, transactions in filtered_transactions.items():
-                                print(f"Transactions with description: {description}")
-                                for transaction in transactions:
-                                    print(transaction)
-                                new_category = input("Enter the new category for the above transactions: ").strip()
-                                for transaction in transactions:
-                                    cashflowtracker.categorize(transaction, new_category)
-                                print(f"All transactions with description '{description}' have been categorized as '{category}'.")
+                            print(f"Transactions with category '{category}':")
+                            for transaction in temporary_filtered.transactions:
+                                print(transaction)
+                            new_category = input("Enter the new category for the transactions above: ").strip()
+                            for transaction in temporary_filtered.transactions:
+                                cashflowtracker.categorize(transaction, new_category)
+                            print(f"All transactions that had previously the category '{category}' have been categorized as '{new_category}'.")
                             break
                     else:
                         print("Invalid choice, please check menu and choose the desired action.")
+                        print()
                         continue
 
             elif main_choice == "4":
@@ -305,6 +315,7 @@ def main():
                                 start_date = input("Enter the start date (YYYY-MM-DD): ").strip()
                                 if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", start_date):
                                     print("Invalid date format. Please enter a valid date.")
+                                    print()
                                     continue
                                 else:
                                     break
@@ -313,6 +324,7 @@ def main():
                                 end_date = input("Enter the end date (YYYY-MM-DD): ").strip()
                                 if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", end_date):
                                     print("Invalid date format. Please enter a valid date.")
+                                    print()
                                     continue
                                 else:
                                     break
@@ -325,6 +337,7 @@ def main():
                             break
                         else:
                             print("Invalid choice. Please choose the desired action.")
+                            print()
                             continue
 
                     while True:
@@ -342,12 +355,14 @@ def main():
                                     break
                                 else:
                                     print("Invalid choice. Please choose the desired action.")
+                                    print()
                                     continue
 
                             while True:
                                 category_filter = input("Enter the category you want to filter by: ").strip()
                                 if category_filter not in categories:
                                     print("Invalid category. Please enter a valid category.")
+                                    print()
                                     continue
                                 else:
                                     main_bool.append("category")
@@ -358,6 +373,7 @@ def main():
                             break
                         else:
                             print("Invalid choice. Please choose the desired action.")
+                            print()
                             continue
 
                     while True:
@@ -367,6 +383,7 @@ def main():
                                 type_filter = input("Enter the type you want to filter by (income or expense): ").strip().lower()
                                 if type_filter not in ["income", "expense"]:
                                     print("Invalid type. Please enter a valid type.")
+                                    print()
                                     continue
                                 else:
                                     main_bool.append("type")
@@ -377,6 +394,7 @@ def main():
                             break
                         else:
                             print("Invalid choice. Please choose the desired action.")
+                            print()
                             continue
                     if main_bool == ["date", "category", "type"]:
                         break
@@ -403,6 +421,7 @@ def main():
                         break
                     else:
                         print("Invalid choice, please check menu and choose the desired action.")
+                        print()
                         continue
                            
                     
@@ -413,9 +432,32 @@ def main():
                 pass
 
             elif main_choice == "6":
-                # TODO:
-                # View budget report
-                pass
+                # View your data (complete table, filtered list or budget report)
+                while True:
+                    print("Choose a data to view:")
+                    print("1. Complete cashflow table")
+                    print("2. Last filtered list created")
+                    print("3. Create a budget report")
+                    print("4. Go back to the main menu")
+                    print()
+                    sub_choice_6 = input("Enter your choice: ").strip()
+                    if sub_choice_6 == "1":
+                        print(cashflowtracker)
+                        continue
+                    elif sub_choice_6 == "2":
+                        print(filtered_transactions_obj)
+                        continue
+                    elif sub_choice_6 == "3":
+                        # TODO:
+                        # Create a budget report
+                        continue
+                    elif sub_choice_6 == "4":
+                        break
+                    else:
+                        print("Invalid choice, please check menu and choose the desired action.")
+                        print()
+                        continue
+                    
 
             elif main_choice == "7":
                 # TODO:
@@ -475,23 +517,20 @@ def read_csv(path, date="date", description="description", value="value"):
         file.seek(0)
         next(reader)
 
-        try:
-            if date_format == "dayfirst":
-                for row in reader:
-                    date_str = row[date_index]
+        for row in reader:
+            date_str = row[date_index]
+            try:
+                if date_format == "dayfirst":
                     date = parse(date_str, dayfirst=True).strftime("%Y-%m-%d")
-            else:
-                for row in reader:
-                    date_str = row[date_index]
+                else:
                     date = parse(date_str, dayfirst=False).strftime("%Y-%m-%d")
-    
-        except ValueError:
-            raise ValueError("'date' format should be one of the following: 'YYYY-MM-DD', 'MM-DD-YYYY', 'DD-MM-YYYY'")
+            except ValueError:
+                raise ValueError("'date' format should be one of the following: 'YYYY-MM-DD', 'MM-DD-YYYY', 'DD-MM-YYYY'")
 
-        value = float(row[value_index])
-        description = row[description_index]
-        transaction = Transaction(date, "", description, value)
-        yield transaction
+            value = float(row[value_index])
+            description = row[description_index]
+            transaction = Transaction(date, "", description, value)
+            yield transaction
 
 
 def group_uncategorized(cashflowtracker):
