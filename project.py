@@ -2,6 +2,7 @@ import csv
 from datetime import datetime
 from dateutil.parser import parse
 import pandas as pd
+import os
 import re
 from tabulate import tabulate
 
@@ -31,7 +32,6 @@ class Budget:
 
 class CashFlowTracker:
     BUDGET_PERIODS = ["daily", "weekly", "monthly", "yearly"]
-
 
     def __init__(self):
         self.transactions = []
@@ -173,6 +173,7 @@ class CashFlowTracker:
 
 def main(): 
     cashflowtracker = CashFlowTracker()
+    filtered_cashflow = None
     print()
     print("Welcome to CashFlow Tracker!")
     try:
@@ -182,10 +183,10 @@ def main():
             print("2. Add new transaction manually")
             print("3. Choose a category for your transactions")
             print("4. Set a budget for each category")
-            print("5. Generate filtered list of transactions")
+            print("5. Generate filtered cashflow table")
             print("6. Create a budget report")
             print("7. View your data (complete cashflow, filtered cashflow or a summary)")  
-            print("8. Export your data to a CSV file")
+            print("8. Export data, summary, or report to a CSV file")
             print("9. Exit")
             print("(Press Ctrl+C to exit the program at any time)")
             print()
@@ -261,10 +262,11 @@ def main():
                     
             elif main_choice == "2":
                 # Add new transaction manually
+                object = cashflowtracker
                 if filtered_cashflow:
                     print("Please choose if you want to insert a new transaction to:")
-                    print("1. Main CashFlow data")
-                    print("2. Your already filtered CashFlow data")
+                    print("1. Your complete cashflow data")
+                    print("2. Your already filtered cashflow data")
                     while True:
                         data_choice = input("Please type the number of your choice: ").strip()
                         if data_choice == "1":
@@ -277,8 +279,7 @@ def main():
                             print("Invalid choice, please check menu and choose the desired option.")
                             print()
                             continue
-                elif not filtered_cashflow:
-                    object = cashflowtracker
+
                 print("Enter the details of the transaction:")
                 while True:
                     date = input("Date (YYYY-MM-DD): ").strip()
@@ -332,17 +333,20 @@ def main():
                 transaction = Transaction(date, category, description, value)
                 object.add(transaction)
                 if data_choice == "1":
-                    cashflowtracker = object
-                    
+                    cashflowtracker = object    
                 elif data_choice == "2":
                     filtered_cashflow = object
+                elif not data_choice:
+                    cashflowtracker = object
+                data_choice = None
                                       
             elif main_choice == "3":
                 # Choose category of transactions
+                object = cashflowtracker
                 if filtered_cashflow:
                     print("Please choose if you want to change transaction categories of:")
-                    print("1. Main CashFlow data")
-                    print("2. Your already filtered CashFlow data")
+                    print("1. Your complete cashflow data")
+                    print("2. Your already filtered cashflow data")
                     while True:
                         data_choice = input("Please type the number of your choice: ").strip()
                         if data_choice == "1":
@@ -355,8 +359,7 @@ def main():
                             print("Invalid choice, please check menu and choose the desired option.")
                             print()
                             continue
-                elif not filtered_cashflow:
-                    object = cashflowtracker
+
                 while True:
                     print("Choose an option:")
                     print("1. If you want to categorize uncategorized transactions")
@@ -372,14 +375,34 @@ def main():
                             for transaction in transactions:
                                 object.categorize(transaction, category)
                             print(f"All transactions with description '{description}' have been categorized as '{category}'.")
+                            print()
                         if data_choice == "1":
                             cashflowtracker = object
                         elif data_choice == "2":
                             filtered_cashflow = object
+                        elif not data_choice:
+                            cashflowtracker = object
+                        data_choice = None
                         break
 
-                    # TODO: Review this part
                     elif choice == "2":
+                        object = cashflowtracker
+                        if filtered_cashflow:
+                            print("Please choose if you want to change transaction categories of:")
+                            print("1. Your complete cashflow data")
+                            print("2. Your already filtered cashflow data")
+                            while True:
+                                data_choice = input("Please type the number of your choice: ").strip()
+                                if data_choice == "1":
+                                    object = cashflowtracker
+                                    break
+                                elif data_choice == "2":
+                                    object = filtered_cashflow
+                                    break
+                                else:
+                                    print("Invalid choice, please check menu and choose the desired option.")
+                                    print()
+                                    continue
                         category = input("Enter the category you want to filter transactions by: ").strip()
                         temporary_filtered = object.filter(category=category)
                         if not temporary_filtered.transactions:
@@ -392,11 +415,14 @@ def main():
                             new_category = input("Enter the new category for the transactions above: ").strip()
                             for transaction in temporary_filtered.transactions:
                                 object.categorize(transaction, new_category)
+                            print(f"All transactions that had previously the category '{category}' have been categorized as '{new_category}'.")
                             if data_choice == "1":
                                 cashflowtracker = object
                             elif data_choice == "2":
                                 filtered_cashflow = object
-                            print(f"All transactions that had previously the category '{category}' have been categorized as '{new_category}'.")
+                            elif not data_choice:
+                                cashflowtracker = object
+                            data_choice = None
                             break
                     else:
                         print("Invalid choice, please check menu and choose the desired action.")
@@ -405,10 +431,11 @@ def main():
 
             elif main_choice == "4":
                 # Set budget for each category
+                object = cashflowtracker
                 if filtered_cashflow:
                     print("Please choose if you want to set budgets to:")
-                    print("1. Main CashFlow data")
-                    print("2. Your already filtered CashFlow data")
+                    print("1. Your main cashflow data")
+                    print("2. Your already filtered cashflow data")
                     while True:
                         data_choice = input("Please type the number of your choice: ").strip()
                         if data_choice == "1":
@@ -421,8 +448,7 @@ def main():
                             print("Invalid choice, please check menu and choose the desired option.")
                             print()
                             continue
-                elif not filtered_cashflow:
-                    object = cashflowtracker
+
                 categories = set([t.category for t in object.transactions])
                 if not object.transactions:
                     print("There are no transactions registered yet.")
@@ -463,6 +489,10 @@ def main():
                     while True:
                         try:
                             amount = float(input("Enter the budget amount: ").strip())
+                            if amount < 0:
+                                print("Invalid amount. Please enter a valid amount.")
+                                print()
+                                continue
                             break
                         except ValueError:
                             print("Invalid amount. Please enter a valid amount.")
@@ -470,12 +500,13 @@ def main():
                             continue
                     object.set_budget(category, amount, period)
                     print(f"Budget of ${amount:.2f} set for '{category}' in a {period} period.")
-
-                    # TODO
-
-
-
-                    continue
+                    if data_choice == "1":
+                        cashflowtracker = object
+                    elif data_choice == "2":
+                        filtered_cashflow = object
+                    elif not data_choice:
+                            cashflowtracker = object
+                    data_choice = None
 
             elif main_choice == "5":
                 # Generate filtered list of transactions
@@ -594,12 +625,12 @@ def main():
                             continue
 
                 filtered_cashflow = cashflowtracker.filter(date_filter, category_filter, type_filter)
-                print("Your filtered transaction table is ready")
+                print("Your filtered cashflow date is ready")
                 while True:
                     print("Please choose an option:")
-                    print("1. View the table")
-                    print("2. View a summary of the table")
-                    print("3. Export this table to a CSV or Excel file")
+                    print("1. View a table of it")
+                    print("2. View a summary of it")
+                    print("3. Export it to a CSV file")
                     print("4. Go back to the main menu")
                     choice = input("Enter your choice: ").strip()
                     if choice == "1":
@@ -628,8 +659,8 @@ def main():
             elif main_choice == "6":
                 # Create a budget report
                 print("Do you want to generate a budget report for:")
-                print("1. Your complete data set")
-                print("2. Your last filtered list of transactions")
+                print("1. Your complete cashflow data")
+                print("2. Your last filtered cashflow data")
                 while True:
                     choice = input("Enter the number of your choice: ").strip()
                     if choice == "1":
@@ -654,11 +685,11 @@ def main():
                         continue
 
             elif main_choice == "7":
-                # View your data (complete cashflow, filtered cashflow or a summary
+                # View your data (complete cashflow, filtered cashflow or a summary)
                 while True:
                     print("Choose a data to view:")
-                    print("1. Complete cashflow table")
-                    print("2. Your last filtered list")
+                    print("1. Complete cashflow data")
+                    print("2. Your last filtered cashflow data")
                     print("3. Summary of your data")
                     print("4. Go back to the main menu")
                     print()
@@ -667,18 +698,31 @@ def main():
                         print(cashflowtracker)
                         continue
                     elif choice == "2":
-                        print(filtered_cashflow)
-                        continue
+                        if filtered_cashflow:
+                            print(filtered_cashflow)
+                            continue
+                        else:
+                            print("No filtered cashflow data available.")
+                            print()
+                            continue
                     elif choice == "3":
-                        print("Choose an option:")
-                        print("1. Summary of your complete cashflow")
-                        print("2. Summary of your last filtered cashflow")
-
-
-
-
-                        # TODO: Export a summary
-
+                        object = cashflowtracker
+                        if filtered_cashflow:
+                            print("Please choose if you want to get summary for:")
+                            print("1. Your main cashflow data")
+                            print("2. Your already filtered cashflow data")
+                            while True:
+                                data_choice = input("Please type the number of your choice: ").strip()
+                                if data_choice == "1":
+                                    object = cashflowtracker
+                                    break
+                                elif data_choice == "2":
+                                    object = filtered_cashflow
+                                    break
+                                else:
+                                    print("Invalid choice, please check menu and choose the desired option.")
+                                    print()
+                                    continue
                         print(object.summary())
                         continue
                     elif choice == "4":
@@ -689,12 +733,13 @@ def main():
                         continue
                     
             elif main_choice == "8":
-                # Export data, summary, list or report to a CSV or Excel file
+                # Export data, summary, or report to a CSV file
                 print("Please choose which data you wish to export:")
-                print("1. Your complete data set")
-                print("2. Your filtered transactions list")
-                print("3. A budget report")
-                print("4. Go back to the main menu")
+                print("1. Your complete cashflow data")
+                print("2. Your filtered cashflow data")
+                print("3. A summary of your data")
+                print("4. A budget report")
+                print("5. Go back to the main menu")
                 while True:
                     choice = input("Enter the number of your choice: ").strip()
                     if choice == "1":
@@ -709,39 +754,87 @@ def main():
                                 print()
                                 continue
                     elif choice == "2":
+                        if not filtered_cashflow:
+                            print("No filtered cashflow data available.")
+                            print()
+                            continue
                         while True:
-                            name = input("Please choose a file name: ")
-                            if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9_\- ]*$", name):
-                                print("Invalid file name, please choose a valid one")
-                                continue
-                            else:
+                            try:
+                                name = input("Please choose a file name: ")
+                                message = export_data(filtered_cashflow, name)
+                                print(f"{message}")
                                 break
-                        export_data(filtered_cashflow, name)
-                        print("")
+                            except ValueError as e:
+                                print(f"Error: {e}")
+                                print()
+                                continue
                         continue
                     elif choice == "3":
-
-
-
-                        # TODO: choose betwwen filtered_cashflow and cashflowtracker
-
+                        object = cashflowtracker
+                        if filtered_cashflow:
+                            print("Please choose if you want to export a budget report of:")
+                            print("1. Your main cashflow data")
+                            print("2. Your already filtered cashflow data")
+                            while True:
+                                data_choice = input("Please type the number of your choice: ").strip()
+                                if data_choice == "1":
+                                    object = cashflowtracker
+                                    break
+                                elif data_choice == "2":
+                                    object = filtered_cashflow
+                                    break
+                                else:
+                                    print("Invalid choice, please check menu and choose the desired option.")
+                                    print()
+                                    continue
                         while True:
-                            name = input("Please choose a file name: ")
-                            if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9_\- ]*$", name):
-                                print("Invalid file name, please choose a valid one")
-                                continue
-                            else:
+                            try:
+                                name = input("Please choose a file name: ")
+                                message = export_data(object.budget_report(), name)
+                                print(f"{message}")
+                                data_choice = None
                                 break
-                        export_data(object.budget_report(), name)
-                        print("")
+                            except ValueError as e:
+                                print(f"Error: {e}")
+                                print()
+                                continue
                         continue
                     elif choice == "4":
+                        object = cashflowtracker
+                        if filtered_cashflow:
+                            print("Please choose if you want to export a summary of:")
+                            print("1. Your main cashflow data")
+                            print("2. Your already filtered cashflow data")
+                            while True:
+                                data_choice = input("Please type the number of your choice: ").strip()
+                                if data_choice == "1":
+                                    object = cashflowtracker
+                                    break
+                                elif data_choice == "2":
+                                    object = filtered_cashflow
+                                    break
+                                else:
+                                    print("Invalid choice, please check menu and choose the desired option.")
+                                    print()
+                                    continue
+                        while True:
+                            try:
+                                name = input("Please choose a file name: ")
+                                message = export_data(object.summary(), name)
+                                print(f"{message}")
+                                data_choice = None
+                                break
+                            except ValueError as e:
+                                print(f"Error: {e}")
+                                print()
+                                continue
+                        continue
+                    elif choice == "5":
                         break
                     else:
                         print("Invalid choice, please check menu and choose the desired action.")
                         print()
-                        continue
-                
+                        continue            
 
             elif main_choice == "9":
                 print()
@@ -754,14 +847,12 @@ def main():
     except KeyboardInterrupt:
         print()
         print("\nOperation cancelled by the user, saving changes...")
-
-
-
-        # TODO: If cashflowtracker save and if filtered_cashflow save to a CSV file
-        
-
-
-        print("Changes saved sucessfully.")
+        if cashflowtracker.transactions:
+            message = export_data(cashflowtracker)
+            print(f"{message}")
+        if filtered_cashflow:
+            message = export_data(filtered_cashflow, "filtered_cashflow")
+            print(f"{message}")
         print("Thank you for using CashFlow Tracker. Goodbye!")
         print()
         exit(0)
@@ -852,29 +943,25 @@ def check_date_format(date_list):
 
 def export_data(data, name="cashflowtracker"):
 
-    
-    # TODO: Continue this part
-    
-    if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9_\-]*$", name):
+    if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9_\-()]*$", name):
         raise ValueError("Invalid file name. Please choose a name that contains only alphanumeric characters, underscores, or hyphens.")
-    elif name:
-
-        # TODO: Check if the file already exists
-
-        pass
     
-    if isinstance(data, list):
-        ...
-    elif isinstance(data, CashFlowTracker):
-        ...
-    elif isinstance(data, dict):
-        ...
-    elif isinstance(data, str) and data.startswith("+") and data.endswith("+"):
-        ...
+    base_name = name
+    counter = 1
+    while os.path.exists(f"{name}.csv"):
+        name = f"{base_name}({counter})"
+        counter += 1
+
+    if isinstance(data, CashFlowTracker):
+        df = data.dataframe()
+        df.to_csv(f"{name}.csv", index=False)
+    elif isinstance(data, str):
+        with open(f"{name}.csv", "w") as file:
+            file.write(data)
     elif isinstance(data, pd.DataFrame):
-        ...
+        data.to_csv(f"{name}.csv", index=False)
     else:
-        print("Invalid data type. Please enter a valid data type.")
+        raise ValueError("Invalid data type. Please enter a valid data type.")
     
     message = f"{name}.csv exported successfully."
     return message
