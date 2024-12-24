@@ -178,12 +178,13 @@ def main():
     print("Welcome to CashFlow Tracker!")
     try:
         while True:
+            data_choice = None
             print("Menu:")
             print("1. Import transactions from CSV file")
             print("2. Add new transaction manually")
             print("3. Choose a category for your transactions")
-            print("4. Set a budget for each category")
-            print("5. Generate filtered cashflow table")
+            print("4. Generate filtered cashflow table")
+            print("5. Set a budget for each category")
             print("6. Create a budget report")
             print("7. View your data (complete cashflow, filtered cashflow or a summary)")  
             print("8. Export data, summary, or report to a CSV file")
@@ -430,85 +431,6 @@ def main():
                         continue
 
             elif main_choice == "4":
-                # Set budget for each category
-                object = cashflowtracker
-                if filtered_cashflow:
-                    print("Please choose if you want to set budgets to:")
-                    print("1. Your main cashflow data")
-                    print("2. Your already filtered cashflow data")
-                    while True:
-                        data_choice = input("Please type the number of your choice: ").strip()
-                        if data_choice == "1":
-                            object = cashflowtracker
-                            break
-                        elif data_choice == "2":
-                            object = filtered_cashflow
-                            break
-                        else:
-                            print("Invalid choice, please check menu and choose the desired option.")
-                            print()
-                            continue
-
-                categories = set([t.category for t in object.transactions])
-                if not object.transactions:
-                    print("There are no transactions registered yet.")
-                    print("Please add transactions before setting a budget.")
-                    continue
-                elif categories == {""}:
-                    print("There are no categories being used yet.")
-                    print("Please categorize your transactions before setting a budget.")
-                    continue
-                else:
-                    print("Here is the list of the already existing categories:")
-                    for index, category in enumerate(categories, start=1):
-                        print(f"{index}. {category}")
-                    while True:
-                        try:
-                            choice = int(input("Choose the number of the category to set a budget for: ").strip())
-                            if (choice - 1) <= 0 or (choice - 1) > len(categories):
-                                print("Invalid category number. Please enter a valid number.")
-                                print()
-                                continue
-                            break
-                        except ValueError:
-                            print("Invalid category number. Please enter a valid number.")
-                            print()
-                            continue
-                    category = categories[choice - 1]
-                    print("What is the period for this budget?")
-                    for index, period in enumerate(CashFlowTracker.BUDGET_PERIODS, start=1):
-                        print(f"{index}. {period}")
-                    while True:
-                        choice = input("Enter number correspondent to the desired period: ").strip().lower()
-                        if choice not in ["1", "2", "3", "4"]:
-                            print("Invalid period. Please enter a valid period.")
-                            print()
-                            continue
-                        break
-                    period = CashFlowTracker.BUDGET_PERIODS[int(choice) - 1]
-                    while True:
-                        try:
-                            amount = float(input("Enter the budget amount: ").strip())
-                            if amount < 0:
-                                print("Invalid amount. Please enter a valid amount.")
-                                print()
-                                continue
-                            break
-                        except ValueError:
-                            print("Invalid amount. Please enter a valid amount.")
-                            print()
-                            continue
-                    object.set_budget(category, amount, period)
-                    print(f"Budget of ${amount:.2f} set for '{category}' in a {period} period.")
-                    if data_choice == "1":
-                        cashflowtracker = object
-                    elif data_choice == "2":
-                        filtered_cashflow = object
-                    elif not data_choice:
-                            cashflowtracker = object
-                    data_choice = None
-
-            elif main_choice == "5":
                 # Generate filtered list of transactions
                 if filtered_cashflow:
                     print("Important: If you make a new filtered cashflow, your last one will be lost.")
@@ -625,6 +547,7 @@ def main():
                             continue
 
                 filtered_cashflow = cashflowtracker.filter(date_filter, category_filter, type_filter)
+                print()
                 print("Your filtered cashflow date is ready")
                 while True:
                     print("Please choose an option:")
@@ -656,6 +579,86 @@ def main():
                         print()
                         continue
 
+
+            elif main_choice == "5":
+                # Set budget for each category
+                object = cashflowtracker
+                if filtered_cashflow:
+                    print("Please choose if you want to set budgets to:")
+                    print("1. Your main cashflow data")
+                    print("2. Your already filtered cashflow data")
+                    while True:
+                        data_choice = input("Please type the number of your choice: ").strip()
+                        if data_choice == "1":
+                            object = cashflowtracker
+                            break
+                        elif data_choice == "2":
+                            object = filtered_cashflow
+                            break
+                        else:
+                            print("Invalid choice, please check menu and choose the desired option.")
+                            print()
+                            continue
+
+                categories = set([t.category for t in object.transactions])
+                if not object.transactions:
+                    print("There are no transactions registered yet.")
+                    print("Please add transactions before setting a budget.")
+                    continue
+                elif categories == {""}:
+                    print("There are no categories being used yet.")
+                    print("Please categorize your transactions before setting a budget.")
+                    continue
+                else:
+                    print("Here is the list of the already existing categories:")
+                    for index, category in enumerate(categories, start=1):
+                        print(f"{index}. {category}")
+                    while True:
+                        try:
+                            choice = int(input("Choose the number of the category to set a budget for: ").strip())
+                            if (choice - 1) <= 0 or (choice - 1) > len(categories):
+                                print("Invalid category number. Please enter a valid number.")
+                                print()
+                                continue
+                            break
+                        except ValueError:
+                            print("Invalid category number. Please enter a valid number.")
+                            print()
+                            continue
+                    category = categories[choice - 1]
+                    print("What is the period for this budget?")
+                    for index, period in enumerate(CashFlowTracker.BUDGET_PERIODS, start=1):
+                        print(f"{index}. {period}")
+                    while True:
+                        choice = input("Enter number correspondent to the desired period: ").strip().lower()
+                        if choice not in ["1", "2", "3", "4"]:
+                            print("Invalid period. Please enter a valid period.")
+                            print()
+                            continue
+                        break
+                    period = CashFlowTracker.BUDGET_PERIODS[int(choice) - 1]
+                    while True:
+                        try:
+                            amount = float(input("Enter the budget amount: ").strip())
+                            if amount < 0:
+                                print("Invalid amount. Please enter a valid amount.")
+                                print()
+                                continue
+                            break
+                        except ValueError:
+                            print("Invalid amount. Please enter a valid amount.")
+                            print()
+                            continue
+                    object.set_budget(category, amount, period)
+                    print(f"Budget of ${amount:.2f} set for '{category}' in a {period} period.")
+                    if data_choice == "1":
+                        cashflowtracker = object
+                    elif data_choice == "2":
+                        filtered_cashflow = object
+                    elif not data_choice:
+                            cashflowtracker = object
+                    data_choice = None
+
             elif main_choice == "6":
                 # Create a budget report
                 print("Do you want to generate a budget report for:")
@@ -669,7 +672,6 @@ def main():
                         except ValueError as e:
                             print(f"Error: {e}")
                             print()
-                            continue
                         break
                     elif choice == "2":
                         try:
@@ -677,7 +679,6 @@ def main():
                         except ValueError as e:
                             print(f"Error: {e}")
                             print()
-                            continue
                         break
                     else:
                         print("Invalid choice, please check menu and choose the desired action.")
@@ -883,7 +884,13 @@ def read_csv(path, date="date", description="description", value="value"):
         except ValueError:
             raise ValueError("'description' column not found in CSV file.")
 
-        date_list = [next(reader)[date_index] for _ in range(30)]
+        date_list = []
+        for _ in range(30):
+            try:
+                date_list.append(next(reader)[date_index])
+            except StopIteration:
+                break
+
         date_format = check_date_format(date_list)
 
         if date_format is None:
