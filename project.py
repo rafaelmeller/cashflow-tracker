@@ -88,23 +88,32 @@ class CashFlowTracker:
         end_date = max([t.date for t in self.transactions])
         report_period = end_date - start_date
         report = []
-        for budget in self.budgets:
-            if budget.period == "daily":
-                period_budget = budget.amount * report_period.days
-            elif budget.period == "weekly":
-                period_budget = budget.amount * (report_period.days // 7)
-            elif budget.period == "monthly":
-                period_budget = budget.amount * (report_period.days // 30)
-            elif budget.period == "yearly":
-                period_budget = budget.amount * (report_period.days // 365)
-            actual = sum([abs(t.value) for t in self.transactions if t.category == budget.category])
-            difference = period_budget - actual
-            report.append({
-                "Category": budget.category,
-                "Budget": period_budget,
-                "Actual": actual,
-                "Difference": difference
-            })
+
+        if report_period.days < 30:
+            for budget in self.budgets:
+                if budget.period == "daily":
+                    period_budget = budget.amount * report_period.days
+                elif budget.period == "weekly":
+                    period_budget = budget.amount * (report_period.days // 7)
+                elif budget.period == "monthly":
+                    period_budget = budget.amount * (report_period.days // 30)
+                elif budget.period == "yearly":
+                    period_budget = budget.amount * (report_period.days // 365)
+                actual = sum([abs(t.value) for t in self.transactions if t.category == budget.category])
+                difference = period_budget - actual
+                report.append({
+                    "Category": budget.category,
+                    "Budget": period_budget,
+                    "Actual": actual,
+                    "Difference": difference
+                })
+
+        else:
+            grouped_transactions = group_by_month(self)
+            for budget in self.budgets:
+
+                #TODO: separate and return monthly budget reports for the period
+                pass
        
         report_table = [[item["Category"], item["Budget"], item["Actual"], item["Difference"]] for item in report]
         
@@ -564,14 +573,15 @@ def main():
                         continue
                     elif choice == "3":
                         while True:
-                            name = input("Please choose a file name: ")
-                            if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9_\- ]*$", name):
-                                print("Invalid file name, please choose a valid one")
-                                continue
-                            else:
+                            try:
+                                name = input("Please choose a file name: ").strip()
+                                message = export_data(filtered_cashflow, name)
+                                print(f"{message}")
                                 break
-                        export_data(filtered_cashflow, name)
-                        continue
+                            except ValueError as e:
+                                print(f"Error: {e}")
+                                print()
+                                continue
                     elif choice == "4":
                         break
                     else:
@@ -746,7 +756,7 @@ def main():
                     if choice == "1":
                         while True:
                             try:
-                                name = input("Please choose a file name: ")
+                                name = input("Please choose a file name: ").strip()
                                 message = export_data(cashflowtracker, name)
                                 print(f"{message}")
                                 break
@@ -761,7 +771,7 @@ def main():
                             continue
                         while True:
                             try:
-                                name = input("Please choose a file name: ")
+                                name = input("Please choose a file name: ").strip()
                                 message = export_data(filtered_cashflow, name)
                                 print(f"{message}")
                                 break
@@ -790,7 +800,7 @@ def main():
                                     continue
                         while True:
                             try:
-                                name = input("Please choose a file name: ")
+                                name = input("Please choose a file name: ").strip()
                                 message = export_data(object.budget_report(), name)
                                 print(f"{message}")
                                 data_choice = None
@@ -820,7 +830,7 @@ def main():
                                     continue
                         while True:
                             try:
-                                name = input("Please choose a file name: ")
+                                name = input("Please choose a file name: ").strip()
                                 message = export_data(object.summary(), name)
                                 print(f"{message}")
                                 data_choice = None
@@ -929,6 +939,19 @@ def group_uncategorized(cashflowtracker):
     return grouped_uncategorized
 
 
+def group_by_month(object):
+    # Group transactions by month
+    transactions = object.transactions
+    grouped_transactions = {}
+    for transaction in transactions:
+        month = transaction.date.strftime("%B %Y")
+        if month not in grouped_transactions:
+            grouped_transactions[month] = []
+        grouped_transactions[month].append(transaction)
+    
+    return grouped_transactions
+
+
 def check_date_format(date_list):
     patterns = {
         "yearfirst": r"^\d{4}[-/](0[1-9]|1[012])[-/](0[1-9]|[12][0-9]|3[01])$",
@@ -950,9 +973,12 @@ def check_date_format(date_list):
 
 def export_data(data, name="cashflowtracker"):
 
+    if name.endswith(".csv"):
+        name = name.rstrip(".csv")
+
     if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9_\-()]*$", name):
         raise ValueError("Invalid file name. Please choose a name that contains only alphanumeric characters, underscores, or hyphens.")
-    
+
     base_name = name
     counter = 1
     while os.path.exists(f"{name}.csv"):
