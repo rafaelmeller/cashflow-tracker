@@ -102,24 +102,40 @@ class CashFlowTracker:
                 actual = sum([abs(t.value) for t in self.transactions if t.category == budget.category])
                 difference = period_budget - actual
                 report.append({
+                    "Period": f"From {start_date} to {end_date}",
                     "Category": budget.category,
                     "Budget": period_budget,
                     "Actual": actual,
                     "Difference": difference
                 })
+            report_table = [[item["Category"], item["Budget"], item["Actual"], item["Difference"]] for item in report]
+            return tabulate(report_table, headers=["Category", "Budget", "Actual", "Difference"], tablefmt="grid")
 
         else:
             grouped_transactions = group_by_month(self)
-            for budget in self.budgets:
-
-                #TODO: separate and return monthly budget reports for the period
-                pass
+            for month, transactions in grouped_transactions.items():
+                for budget in self.budgets:
+                    if budget.period == "daily":
+                        period_budget = budget.amount * 30
+                    elif budget.period == "weekly":
+                        period_budget = budget.amount // 7 * 30
+                    elif budget.period == "monthly":
+                        period_budget = budget.amount
+                    elif budget.period == "yearly":
+                        period_budget = budget.amount // 12
+                    actual = sum([abs(t.value) for t in transactions if t.category == budget.category])
+                    difference = period_budget - actual
+                    report.append({
+                        "Month": month,
+                        "Category": budget.category,
+                        "Budget": period_budget,
+                        "Actual": actual,
+                        "Difference": difference
+                    })
+            report_table = [[item["Month"], item["Category"], item["Budget"], item["Actual"], item["Difference"]] for item in report]
+            return tabulate(report_table, headers=["Month", "Category", "Budget", "Actual", "Difference"], tablefmt="grid")
        
-        report_table = [[item["Category"], item["Budget"], item["Actual"], item["Difference"]] for item in report]
         
-        return tabulate(report_table, headers=["Category", "Budget", "Actual", "Difference"], tablefmt="grid")
-    
-
     def summary(self):
         # Calculates totals for incomes, expenses, and by category.
         start_date = min([t.date for t in self.transactions])
