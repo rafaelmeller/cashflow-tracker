@@ -5,7 +5,7 @@ from datetime import datetime
 from dateutil.parser import parse
 import pandas as pd
 from tabulate import tabulate
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 
 
 class Transaction:
@@ -29,10 +29,21 @@ class Budget:
 
     def __str__(self):
         return f"Category: {self.category}, Amount: ${self.amount:.2f}, Period: {self.period}"
+    
+
+class Goal:
+    def __init__(self, category: str, amount: float, period: str):
+        self.category = category
+        self.amount = amount
+        self.period = period
+
+
+    def __str__(self):
+        return f"Category: {self.category}, Amount: ${self.amount:.2f}, Period: {self.period}"
 
 
 class CashFlowTracker:
-    BUDGET_PERIODS = ["daily", "weekly", "monthly", "yearly"]
+    TARGET_PERIODS = ["daily", "weekly", "monthly", "yearly"]
 
     def __init__(self):
         self.transactions: List[Transaction] = []
@@ -42,11 +53,22 @@ class CashFlowTracker:
     def add(self, transaction: Transaction) -> List[Transaction]:
         self.transactions.append(transaction)
         return self.transactions
+ 
+
+    def edit(self, old_transaction: Transaction, new_transaction: Transaction) -> List[Transaction]:
+        self.delete(old_transaction)
+        self.add(new_transaction)
+        return self.transactions
+    
+
+    def delete(self, transaction: Transaction) -> List[Transaction]:
+        self.transactions.remove(transaction)
+        return self.transactions
 
 
-    def categorize(self, transaction: Transaction, category: str) -> Transaction:
+    def categorize(self, transaction: Transaction, category: str) -> List[Transaction]:
         transaction.category = category
-        return transaction
+        return self.transactions
 
 
     def filter(self, date_tuple: Tuple[datetime, datetime] = None, category: str = None, type: str = None):
@@ -69,22 +91,35 @@ class CashFlowTracker:
         return filtered_cashflowtracker
 
 
-    def set_budget(self, category: str, amount: float, period: str) -> Dict[str, Budget]:
-        if period not in self.BUDGET_PERIODS:
+    def set_target(self, category: str, amount: float, period: str) -> Union[Dict[str, Budget], Dict[str, Goal]]:
+        if period not in self.TARGET_PERIODS:
             raise ValueError("Invalid period. Please enter a valid period.")
+        
         existing_categories = set([t.category for t in self.transactions])
-
         if category not in existing_categories:
             raise ValueError("Category not found. Please enter a valid category.")
 
-        budget = Budget(category, amount, period)
-        self.budgets[category] = budget
-        return self.budgets
-    
+        # Check if the category has transactions with positive or negative values
+        has_positive = any(t.value > 0 for t in self.transactions if t.category == category)
+        has_negative = any(t.value < 0 for t in self.transactions if t.category == category)
 
-    def budget_report(self) -> str:
-        if not self.budgets:
-            raise ValueError("No budgets set yet.")
+        if has_positive and not has_negative:
+            goal = Goal(category, amount, period)
+            self.goals[category] = goal
+            return self.goals
+        
+        elif has_negative and not has_positive:
+            budget = Budget(category, amount, period)
+            self.budgets[category] = budget
+            return self.budgets
+        else:
+            raise ValueError("Category has both positive and negative transactions, please review category.")
+        
+
+    def target_report(self) -> str:
+        if not self.budgets and not self.goals:
+            raise ValueError("No budgets or goals set yet.")
+        
         start_date = min([t.date for t in self.transactions])
         end_date = max([t.date for t in self.transactions])
         report_period = end_date - start_date
@@ -209,7 +244,7 @@ def main():
             print()
             print("Menu:")
             print("1. Import transactions from CSV file")
-            print("2. Add new transaction manually")
+            print("2. Add or edit a transaction manually")
             print("3. Choose a category for your transactions")
             print("4. Generate filtered cashflow table")
             print("5. Set a budget for each category")
@@ -290,7 +325,7 @@ def main():
                 # Add new transaction manually
                 object = cashflowtracker
                 if filtered_cashflow:
-                    print("Please choose if you want to insert a new transaction to:")
+                    print("Please choose if you want edit or add a new transaction to:")
                     print("1. Your complete cashflow data")
                     print("2. Your already filtered cashflow data")
                     while True:
@@ -305,57 +340,200 @@ def main():
                         else:
                             print("Invalid choice, please check menu and choose the desired option.")
                             continue
-
-                print("Enter the details of the transaction:")
+                print("Please choose your next action:")
+                print("1. Add a new transaction")
+                print("2. Edit or delete an existing transaction")
+                print("3. Go back to the main menu")
                 while True:
-                    date = input("Date (YYYY-MM-DD): ").strip()
-                    if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", date):
-                        print("Invalid date format. Please enter a valid date.")
-                        print()
-                        continue
-                    break
+                    choice = input("Enter the number of your choice: ").strip()
+                    if choice == "1":
+                        print("Enter the details of the transaction:")
+                        while True:
+                            date = input("Date (YYYY-MM-DD): ").strip()
+                            if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", date):
+                                print("Invalid date format. Please enter a valid date.")
+                                print()
+                                continue
+                            break
 
-                while True:
-                    print()
-                    print("Now the category.")
-                    categories = set([t.category for t in object.transactions])
+                        while True:
+                            print()
+                            print("Now the category.")
+                            categories = set([t.category for t in object.transactions])
 
-                    if categories == {""}:
-                        print("There are no categories being used yet.")
-                        print("Type one for your transaction.")
-                        category = input("Category: ").strip()
+                            if categories == {""}:
+                                print("There are no categories being used yet.")
+                                print("Type one for your transaction.")
+                                category = input("Category: ").strip()
+                                break
+                            else:
+                                print("Here is the list of the already existing categories:")
+                                for category in categories:
+                                    if category == "":
+                                        continue
+                                    print(f"- {category}")
+                                print("Type a name for your transaction.")
+                                category = input("Category: ").strip()
+                                break  
+
+                        while True:
+                            print()
+                            description = input("Description: ").strip()
+                            if not description:
+                                print("Description cannot be empty. Please enter a valid description.")
+                                continue
+                            break
+
+                        while True:
+                            print()
+                            print("Now, the value. If it is an income, follow the example: '100.00'")
+                            print("If it is an expense, follow the example: '-100.00'")
+                            value = input("Value: ").strip()
+                            try:
+                                value = float(value)
+                                break
+                            except ValueError:
+                                print("Invalid value. Please enter a valid value.")
+                                continue       
+                        transaction = Transaction(date, category, description, value)
+                        object.add(transaction)
+                        break
+                    elif choice == "2":
+                        print("Please choose a way to find the transaction you want to edit:")
+                        print("1. By date")
+                        print("2. By category")
+                        print("3. By description")
+                        print("4. By value")
+                        while True:
+                            choice = input("Enter the number of your choice: ").strip()
+                            if choice == "1":
+                                while True:
+                                    date = input("Enter the date of the transaction you want to edit (YYYY-MM-DD): ").strip()
+                                    if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", date):
+                                        print("Invalid date format. Please enter a valid date.")
+                                        print()
+                                        continue
+                                    break
+                                transactions = [t for t in object.transactions if t.date == datetime.strptime(date, "%Y-%m-%d").date()]
+                                if not transactions:
+                                    print("No transactions found for the date entered.")
+                                    continue
+                                else:
+                                    for index, transaction in transactions:
+                                        print(f"{index + 1}. {transaction}")
+                                    while True:
+                                        try:
+                                            choice = int(input("Enter the number of the transaction you want to edit: ").strip())
+                                            if (choice - 1) < 0 or (choice - 1) > len(transactions):
+                                                print("Invalid transaction number. Please enter a valid number.")
+                                                print()
+                                                continue
+                                            break
+                                        except ValueError:
+                                            print("Invalid transaction number. Please enter a valid number.")
+                                            continue
+                                    transaction = transactions[choice - 1]
+                                    print()
+                                    print("Transaction found:")
+                                    print(transaction)
+                                # TODO: Edit transaction
+                                break
+                            elif choice == "2":
+                                while True:
+                                    print("Here is the list of the already existing categories:")
+                                    categories = set([t.category for t in object.transactions])
+                                    for index, category in categories:
+                                        print(f"{index + 1}. {category}")
+                                    try:
+                                        choice = int(input("Enter the number of the category of the transaction you want to edit: ").strip())
+                                        if (choice - 1) < 0 or (choice - 1) > len(transactions):
+                                            print("Invalid category number. Please enter a valid number.")
+                                            print()
+                                            continue
+                                        break
+                                    except ValueError:
+                                        print("Invalid category number. Please enter a valid number.")
+                                        continue
+                                category = categories[choice - 1]
+                                transactions = [t for t in object.transactions if t.category == category]
+                                for index, transaction in transactions:
+                                    print(f"{index + 1}. {transaction}")
+                                while True:
+                                    try:
+                                        choice = int(input("Enter the number of the transaction you want to edit: ").strip())
+                                        if (choice - 1) < 0 or (choice - 1) > len(transactions):
+                                            print("Invalid transaction number. Please enter a valid number.")
+                                            print()
+                                            continue
+                                        break
+                                    except ValueError:
+                                        print("Invalid transaction number. Please enter a valid number.")
+                                        continue
+                                transaction = transactions[choice - 1]
+                                # TODO: Edit transaction
+                                break
+                            elif choice == "3":
+                                while True:
+                                    keyword = input("Enter a keyword to search for in the description of the transaction you want to edit: ").strip()
+                                    transactions = [t for t in object.transactions if keyword.lower() in t.description.lower()]
+                                    if not transactions:
+                                        print("No transactions found for the keyword entered.")
+                                        continue
+                                    else:
+                                        break
+                                for index, transaction in transactions:
+                                    print(f"{index + 1}. {transaction}")
+                                while True:
+                                    try:
+                                        choice = int(input("Enter the number of the transaction you want to edit: ").strip())
+                                        if (choice - 1) < 0 or (choice - 1) > len(transactions):
+                                            print("Invalid transaction number. Please enter a valid number.")
+                                            print()
+                                            continue
+                                        break
+                                    except ValueError:
+                                        print("Invalid transaction number. Please enter a valid number.")
+                                        continue
+                                transaction = transactions[choice - 1]
+                                # TODO: Edit transaction
+                                break       
+                            elif choice == "4":
+                                while True:
+                                    try:
+                                        value = float(input("Enter the value of the transaction you want to edit: ").strip())
+                                        transactions = [t for t in object.transactions if t.value == value]
+                                        if not transactions:
+                                            print("No transactions found for the value entered.")
+                                            continue
+                                        else:
+                                            break
+                                    except ValueError:
+                                        print("Invalid value. Please enter a valid value.")
+                                        continue
+                                for index, transaction in transactions:
+                                    print(f"{index + 1}. {transaction}")
+                                while True:
+                                    try:
+                                        choice = int(input("Enter the number of the transaction you want to edit: ").strip())
+                                        if (choice - 1) < 0 or (choice - 1) > len(transactions):
+                                            print("Invalid transaction number. Please enter a valid number.")
+                                            print()
+                                            continue
+                                        break
+                                    except ValueError:
+                                        print("Invalid transaction number. Please enter a valid number.")
+                                        continue
+                                transaction = transactions[choice - 1]
+                                # TODO: Edit transaction
+                                break
+                            else:
+                                print("Invalid choice. Please check menu and choose the desired action.")
+                                continue       
+                    elif choice == "3":
                         break
                     else:
-                        print("Here is the list of the already existing categories:")
-                        for category in categories:
-                            if category == "":
-                                continue
-                            print(f"- {category}")
-                        print("Type a name for your transaction.")
-                        category = input("Category: ").strip()
-                        break  
-
-                while True:
-                    print()
-                    description = input("Description: ").strip()
-                    if not description:
-                        print("Description cannot be empty. Please enter a valid description.")
+                        print("Invalid choice, please check menu and choose the desired action.")
                         continue
-                    break
-
-                while True:
-                    print()
-                    print("Now, the value. If it is an income, follow the example: '100.00'")
-                    print("If it is an expense, follow the example: '-100.00'")
-                    value = input("Value: ").strip()
-                    try:
-                        value = float(value)
-                        break
-                    except ValueError:
-                        print("Invalid value. Please enter a valid value.")
-                        continue       
-                transaction = Transaction(date, category, description, value)
-                object.add(transaction)
                 if data_choice == "1":
                     cashflowtracker = object    
                 elif data_choice == "2":
@@ -633,67 +811,70 @@ def main():
                     continue
                 else:
                     while True:
-                        categories = list(categories)
                         categories_with_budget = [category for category in categories if category in object.budgets]
                         categories_without_budget = [category for category in categories if category not in object.budgets]
+                        print()
                         print("Choose an option:")
                         print("1. See all the budgets already set")
                         print("2. Set a budget for a category with no budget yet")
                         print("3. Exit to the main menu")
                         choice = input("Type the number of your option: ")
                         if choice == "1":
-                            for index, category in enumerate(categories_with_budget, start=1):
-                                print(f"{index}. {category}")
                             print()
-                            while True:
-                                print("Please choose an option:")
-                                print("1. Change an existing budget")
-                                print("2. Go back to budget menu")
+                            if categories_with_budget:
+                                for index, category in enumerate(categories_with_budget, start=1):
+                                    print(f"{index}. {category}")
                                 while True:
-                                    choice = input("Please type the number of the desired option: ")
-                                    if choice == "1":
-                                    
-                                        while True:
-                                            try:
-                                                print()
-                                                choice = int(input("Choose the number of the category to set a budget for: ").strip())
-                                                if (choice - 1) < 0 or (choice - 1) > len(categories_with_budget):
-                                                    print("Invalid category number. Please enter a valid number.")
+                                    print("Please choose an option:")
+                                    print("1. Change an existing budget")
+                                    print("2. Go back to budget menu")
+                                    while True:
+                                        choice = input("Please type the number of the desired option: ")
+                                        if choice == "1":
+                                            while True:
+                                                try:
                                                     print()
+                                                    choice = int(input("Choose the number of the category to set a budget for: ").strip())
+                                                    if (choice - 1) < 0 or (choice - 1) > len(categories_with_budget):
+                                                        print("Invalid category number. Please enter a valid number.")
+                                                        print()
+                                                        continue
+                                                    break
+                                                except ValueError:
+                                                    print("Invalid category number. Please enter a valid number.")
+                                                    continue
+                                            category = categories_with_budget[choice - 1]
+                                            print("What is the period for this budget?")
+                                            for index, period in enumerate(CashFlowTracker.TARGET_PERIODS, start=1):
+                                                print(f"{index}. {period}")
+                                            while True:
+                                                choice = input("Enter number correspondent to the desired period: ").strip().lower()
+                                                if choice not in ["1", "2", "3", "4"]:
+                                                    print("Invalid period. Please enter a valid period.")
                                                     continue
                                                 break
-                                            except ValueError:
-                                                print("Invalid category number. Please enter a valid number.")
-                                                continue
-                                        category = categories_with_budget[choice - 1]
-                                        print("What is the period for this budget?")
-                                        for index, period in enumerate(CashFlowTracker.BUDGET_PERIODS, start=1):
-                                            print(f"{index}. {period}")
-                                        while True:
-                                            choice = input("Enter number correspondent to the desired period: ").strip().lower()
-                                            if choice not in ["1", "2", "3", "4"]:
-                                                print("Invalid period. Please enter a valid period.")
-                                                continue
-                                            break
-                                        period = CashFlowTracker.BUDGET_PERIODS[int(choice) - 1]
-                                        while True:
-                                            try:
-                                                amount = float(input("Enter the budget amount: ").strip())
-                                                if amount < 0:
+                                            period = CashFlowTracker.TARGET_PERIODS[int(choice) - 1]
+                                            while True:
+                                                try:
+                                                    amount = float(input("Enter the budget amount: ").strip())
+                                                    if amount < 0:
+                                                        print("Invalid amount. Please enter a valid amount.")
+                                                        continue
+                                                    break
+                                                except ValueError:
                                                     print("Invalid amount. Please enter a valid amount.")
                                                     continue
-                                                break
-                                            except ValueError:
-                                                print("Invalid amount. Please enter a valid amount.")
-                                                continue
-                                        object.set_budget(category, amount, period)
-                                        print(f"Budget of ${amount:.2f} set for '{category}' in a {period} period.")
+                                            object.set_target(category, amount, period)
+                                            print(f"Budget of ${amount:.2f} set for '{category}' in a {period} period.")
 
-                                    elif choice == "2":
+                                        elif choice == "2":
                                             break
-                                    else:
-                                        print("Invalid choice, please check menu and choose the desired option.")
-                                        continue
+                                        else:
+                                            print("Invalid choice, please check menu and choose the desired option.")
+                                            continue
+                            else:
+                                print("No budgets set yet.")
+                                continue
                         elif choice == "2":
                             print("Here is the list of the categories with no budget:")
                             for index, category in enumerate(categories_without_budget, start=1):
@@ -712,7 +893,7 @@ def main():
                                     continue
                             category = categories_without_budget[choice - 1]
                             print("What is the period for this budget?")
-                            for index, period in enumerate(CashFlowTracker.BUDGET_PERIODS, start=1):
+                            for index, period in enumerate(CashFlowTracker.TARGET_PERIODS, start=1):
                                 print(f"{index}. {period}")
                             while True:
                                 choice = input("Enter number correspondent to the desired period: ").strip().lower()
@@ -720,7 +901,7 @@ def main():
                                     print("Invalid period. Please enter a valid period.")
                                     continue
                                 break
-                            period = CashFlowTracker.BUDGET_PERIODS[int(choice) - 1]
+                            period = CashFlowTracker.TARGET_PERIODS[int(choice) - 1]
                             while True:
                                 try:
                                     amount = float(input("Enter the budget amount: ").strip())
@@ -731,7 +912,7 @@ def main():
                                 except ValueError:
                                     print("Invalid amount. Please enter a valid amount.")
                                     continue
-                            object.set_budget(category, amount, period)
+                            object.set_target(category, amount, period)
                             print(f"Budget of ${amount:.2f} set for '{category}' in a {period} period.")  
                         elif choice == "3":
                             break
@@ -756,14 +937,14 @@ def main():
                     choice = input("Enter the number of your choice: ").strip()
                     if choice == "1":
                         try:
-                            print(cashflowtracker.budget_report())
+                            print(cashflowtracker.target_report())
                         except ValueError as e:
                             print(f"Error: {e}")
                             print()
                         break
                     elif choice == "2":
                         try:
-                            print(filtered_cashflow.budget_report())
+                            print(filtered_cashflow.target_report())
                         except ValueError as e:
                             print(f"Error: {e}")
                         break
@@ -872,7 +1053,7 @@ def main():
                         while True:
                             try:
                                 name = input("Please choose a file name: ").strip()
-                                message = export_data(object.budget_report(), name)
+                                message = export_data(object.target_report(), name)
                                 print(f"{message}")
                                 data_choice = None
                                 break
