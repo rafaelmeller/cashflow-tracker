@@ -1,91 +1,29 @@
-Date,Value,ID,Description,Balance
-05/01/2024,2500.00,1a2b3c4d5e6f7g8h9i0j,Salary,6001.35
-07/01/2024,-15.75,2b3c4d5e6f7g8h9i0j1a,Starbucks,5985.60
-09/01/2024,-45.30,3c4d5e6f7g8h9i0j1a2b,Transfer to John Doe,5940.30
-11/01/2024,-120.50,4d5e6f7g8h9i0j1a2b3c,Walmart,5819.80
-13/01/2024,-60.25,5e6f7g8h9i0j1a2b3c4d,Gas Station,5759.55
-15/01/2024,-30.10,6f7g8h9i0j1a2b3c4d5e,Uber,5729.45
-17/01/2024,-75.45,7g8h9i0j1a2b3c4d5e6f,Restaurant,5653.00
-19/01/2024,500.00,8h9i0j1a2b3c4d5e6f7g,Transfer from Jane Smith,6153.00
-21/01/2024,-20.60,9i0j1a2b3c4d5e6f7g8h,Public Transportation,6132.40
-23/01/2024,-50.75,0j1a2b3c4d5e6f7g8h9i,Target,6081.65
-25/01/2024,-35.20,1a2b3c4d5e6f7g8h9i0j,Bus Ticket,6046.45
-27/01/2024,-90.15,2b3c4d5e6f7g8h9i0j1a,Concert,5956.30
-29/01/2024,-25.80,3c4d5e6f7g8h9i0j1a2b,Lyft,5930.50
-31/01/2024,-40.35,4d5e6f7g8h9i0j1a2b3c,Market,5890.15
-02/02/2024,-15.90,5e6f7g8h9i0j1a2b3c4d,Bar,5874.25
-04/02/2024,2500.00,6f7g8h9i0j1a2b3c4d5e,Salary,8374.25
-06/02/2024,-18.75,7g8h9i0j1a2b3c4d5e6f,Starbucks,8355.50
-08/02/2024,-50.30,8h9i0j1a2b3c4d5e6f7g,Transfer to Alice Johnson,8305.20
-10/02/2024,-130.50,9i0j1a2b3c4d5e6f7g8h,Walmart,8174.70
-12/02/2024,-70.25,0j1a2b3c4d5e6f7g8h9i,Gas Station,8104.45
-14/02/2024,-35.10,1a2b3c4d5e6f7g8h9i0j,Uber,8069.35
-16/02/2024,-85.45,2b3c4d5e6f7g8h9i0j1a,Restaurant,7983.90
-18/02/2024,600.00,3c4d5e6f7g8h9i0j1a2b,Transfer from Bob Brown,8583.90
-20/02/2024,-25.60,4d5e6f7g8h9i0j1a2b3c,Public Transportation,8558.30
-22/02/2024,-60.75,5e6f7g8h9i0j1a2b3c4d,Target,8497.55
-24/02/2024,-40.20,6f7g8h9i0j1a2b3c4d5e,Bus Ticket,8457.35
-26/02/2024,-100.15,7g8h9i0j1a2b3c4d5e6f,Concert,8357.20
-28/02/2024,-30.80,8h9i0j1a2b3c4d5e6f7g,Lyft,8326.40
-01/03/2024,-50.35,9i0j1a2b3c4d5e6f7g8h,Market,8276.05
-03/03/2024,-20.90,0j1a2b3c4d5e6f7g8h9i,Bar,8255.15
-05/03/2024,2500.00,1a2b3c4d5e6f7g8h9i0j,Salary,10755.15
-07/03/2024,-20.75,2b3c4d5e6f7g8h9i0j1a,Starbucks,10734.40
-09/03/2024,-55.30,3c4d5e6f7g8h9i0j1a2b,Transfer to Charlie Davis,10679.10
-11/03/2024,-140.50,4d5e6f7g8h9i0j1a2b3c,Walmart,10538.60
-13/03/2024,-80.25,5e6f7g8h9i0j1a2b3c4d,Gas Station,10458.35
-15/03/2024,-40.10,6f7g8h9i0j1a2b3c4d5e,Uber,10418.25
-17/03/2024,-95.45,7g8h9i0j1a2b3c4d5e6f,Restaurant,10322.80
-19/03/2024,700.00,8h9i0j1a2b3c4d5e6f7g,Transfer from David Evans,11022.80
-21/03/2024,-30.60,9i0j1a2b3c4d5e6f7g8h,Public Transportation,10992.20
-23/03/2024,-70.75,0j1a2b3c4d5e6f7g8h9i,Target,10921.45
-25/03/2024,-45.20,1a2b3c4d5e6f7g8h9i0j,Bus Ticket,10876.25
-27/03/2024,-110.15,2b3c4d5e6f7g8h9i0j1a,Concert,10766.10
-29/03/2024,-35.80,3c4d5e6f7g8h9i0j1a2b,Lyft,10730.30
-31/03/2024,-60.35,4d5e6f7g8h9i0j1a2b3c,Market,10669.95
-02/04/2024,-25.90,5e6f7g8h9i0j1a2b3c4d,Bar,10644.05
-04/04/2024,2500.00,6f7g8h9i0j1a2b3c4d5e,Salary,13144.05
-06/04/2024,-22.75,7g8h9i0j1a2b3c4d5e6f,Starbucks,13121.30
-08/04/2024,-60.30,8h9i0j1a2b3c4d5e6f7g,Transfer to Emily White,13061.00
-10/04/2024,-150.50,9i0j1a2b3c4d5e6f7g8h,Walmart,12910.50
-12/04/2024,-90.25,0j1a2b3c4d5e6f7g8h9i,Gas Station,12820.25
-14/04/2024,-45.10,1a2b3c4d5e6f7g8h9i0j,Uber,12775.15
-16/04/2024,-105.45,2b3c4d5e6f7g8h9i0j1a,Restaurant,12669.70
-18/04/2024,800.00,3c4d5e6f7g8h9i0j1a2b,Transfer from Frank Green,13469.70
-20/04/2024,-35.60,4d5e6f7g8h9i0j1a2b3c,Public Transportation,13434.10
-22/04/2024,-80.75,5e6f7g8h9i0j1a2b3c4d,Target,13353.35
-24/04/2024,-50.20,6f7g8h9i0j1a2b3c4d5e,Bus Ticket,13303.15
-26/04/2024,-120.15,7g8h9i0j1a2b3c4d5e6f,Concert,13183.00
-28/04/2024,-40.80,8h9i0j1a2b3c4d5e6f7g,Lyft,13142.20
-30/04/2024,-70.35,9i0j1a2b3c4d5e6f7g8h,Market,13071.85
-02/05/2024,-30.90,0j1a2b3c4d5e6f7g8h9i,Bar,13040.95
-04/05/2024,2500.00,1a2b3c4d5e6f7g8h9i0j,Salary,15540.95
-06/05/2024,-25.75,2b3c4d5e6f7g8h9i0j1a,Starbucks,15515.20
-08/05/2024,-65.30,3c4d5e6f7g8h9i0j1a2b,Transfer to George Brown,15449.90
-10/05/2024,-160.50,4d5e6f7g8h9i0j1a2b3c,Walmart,15289.40
-12/05/2024,-100.25,5e6f7g8h9i0j1a2b3c4d,Gas Station,15189.15
-14/05/2024,-50.10,6f7g8h9i0j1a2b3c4d5e,Uber,15139.05
-16/05/2024,-115.45,7g8h9i0j1a2b3c4d5e6f,Restaurant,15023.60
-18/05/2024,900.00,8h9i0j1a2b3c4d5e6f7g,Transfer from Helen Black,15923.60
-20/05/2024,-40.60,9i0j1a2b3c4d5e6f7g8h,Public Transportation,15883.00
-22/05/2024,-90.75,0j1a2b3c4d5e6f7g8h9i,Target,15792.25
-24/05/2024,-55.20,1a2b3c4d5e6f7g8h9i0j,Bus Ticket,15737.05
-26/05/2024,-130.15,2b3c4d5e6f7g8h9i0j1a,Concert,15606.90
-28/05/2024,-45.80,3c4d5e6f7g8h9i0j1a2b,Lyft,15561.10
-30/05/2024,-80.35,4d5e6f7g8h9i0j1a2b3c,Market,15480.75
-01/06/2024,-35.90,5e6f7g8h9i0j1a2b3c4d,Bar,15444.85
-03/06/2024,2500.00,6f7g8h9i0j1a2b3c4d5e,Salary,17944.85
-05/06/2024,-28.75,7g8h9i0j1a2b3c4d5e6f,Starbucks,17916.10
-07/06/2024,-70.30,8h9i0j1a2b3c4d5e6f7g,Transfer to Ian White,17845.80
-09/06/2024,-170.50,9i0j1a2b3c4d5e6f7g8h,Walmart,17675.30
-11/06/2024,-110.25,0j1a2b3c4d5e6f7g8h9i,Gas Station,17565.05
-13/06/2024,-55.10,1a2b3c4d5e6f7g8h9i0j,Uber,17509.95
-15/06/2024,-125.45,2b3c4d5e6f7g8h9i0j1a,Restaurant,17384.50
-17/06/2024,1000.00,3c4d5e6f7g8h9i0j1a2b,Transfer from Jack White,18384.50
-19/06/2024,-45.60,4d5e6f7g8h9i0j1a2b3c,Public Transportation,18338.90
-21/06/2024,-100.75,5e6f7g8h9i0j1a2b3c4d,Target,18238.15
-23/06/2024,-60.20,6f7g8h9i0j1a2b3c4d5e,Bus Ticket,18177.95
-25/06/2024,-140.15,7g8h9i0j1a2b3c4d5e6f,Concert,18037.80
-27/06/2024,-50.80,8h9i0j1a2b3c4d5e6f7g,Lyft,17987.00
-29/06/2024,-90.35,9i0j1a2b3c4d5e6f7g8h,Market,17896.65
-30/06/2024,-40.90,0j1a2b3c4d5e6f7g8h9i,Bar,17855.75
+Date,Category,Description,Value
+2024-01-05,Salary,Salary,2500.00
+2024-01-05,Dinning,Starbucks,-15.75
+2024-01-09,Internet Maintenance,Transfer to John Doe,-45.30
+2024-01-11,Groceries,Walmart,-120.50
+2024-01-13,Transportation,Gas Station,-60.25
+2024-01-15,Transportation,Uber,-30.10
+2024-01-17,Dinning,Restaurant,-75.45
+2024-01-19,Side Job Income,Transfer from Jane Smith,500.00
+2024-01-21,Transportation,Public Transportation,-20.60
+2024-01-23,Groceries,Target,-50.75
+2024-01-25,Transportation,Bus Ticket,-35.20
+2024-01-27,Entertainment,Concert,-90.15
+2024-01-29,Transportation,Lyft,-25.80
+2024-01-31,Groceries,Market,-40.35
+2024-02-02,Entertainment,Bar,-15.90
+2024-02-04,Salary,Salary,2500.00
+2024-02-06,Dinning,Starbucks,-18.75
+2024-02-08,Dinning,Transfer to Alice Johnson,-50.30
+2024-02-10,Groceries,Walmart,-130.50
+2024-02-12,Transportation,Gas Station,-70.25
+2024-02-14,Transportation,Uber,-35.10
+2024-02-16,Dinning,Restaurant,-85.45
+2024-02-18,Side Job Income,Transfer from Bob Brown,600.00
+2024-02-20,Transportation,Public Transportation,-25.60
+2024-02-22,Groceries,Target,-60.75
+2024-02-24,Transportation,Bus Ticket,-40.20
+2024-02-26,Entertainment,Concert,-100.15
+2024-02-28,Transportation,Lyft,-30.80

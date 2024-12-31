@@ -1,7 +1,7 @@
 import csv
 import os
 import re
-from datetime import datetime
+from datetime import datetime, date
 from dateutil.parser import parse
 import pandas as pd
 from tabulate import tabulate
@@ -10,7 +10,10 @@ from typing import List, Dict, Tuple, Union
 
 class Transaction:
     def __init__(self, date: str, category: str, description: str, value: float):
-        self.date = datetime.strptime(date, "%Y-%m-%d").date()
+        if isinstance(date, str):
+            self.date = datetime.strptime(date, "%Y-%m-%d").date()
+        else:
+            self.date = date
         self.category = category
         self.description = description
         self.value = value
@@ -80,6 +83,10 @@ class CashFlowTracker:
         filtered_transactions = self.transactions
         if date_tuple:
             start_date, end_date = date_tuple
+            if isinstance(start_date, str):
+                start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            if isinstance(end_date, str):
+                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
             filtered_transactions = [t for t in filtered_transactions if start_date <= t.date <= end_date]
         if category:
             filtered_transactions = [t for t in filtered_transactions if t.category == category]
@@ -394,12 +401,13 @@ def main():
                 object = cashflowtracker
                 if filtered_cashflow:
                     object, data_choice = choose_data_set(cashflowtracker, filtered_cashflow)
-                print()
-                print("Please choose your next action:")
-                print("1. Add a new transaction")
-                print("2. Edit or delete an existing transaction")
-                print("3. Go back to the main menu")
+                
                 while True:
+                    print()
+                    print("Please choose your next action:")
+                    print("1. Add a new transaction")
+                    print("2. Edit or delete an existing transaction")
+                    print("3. Go back to the main menu")
                     print()
                     choice = input("Enter the number of your choice: ").strip()
                     if choice == "1":
@@ -785,9 +793,9 @@ def main():
                         date_bool = input("Do you want to filter by date range (y/n)? ").strip().lower()
                         if date_bool == "y":
                             print("Please enter the start date for the range.")
-                            start_date = datetime.strptime(get_valid_date(), "%Y-%m-%d").date()
+                            start_date = get_valid_date()
                             print("Please enter the end date for the range.")
-                            end_date = datetime.strptime(get_valid_date(), "%Y-%m-%d").date()
+                            end_date = get_valid_date()
                             date_filter = (start_date, end_date)
                             main_bool.append("date")
                         elif date_bool == "n":
@@ -1173,7 +1181,10 @@ def read_csv(path, date="date", category="category", description="description", 
         date_list = []
         for _ in range(30):
             try:
-                date_list.append(next(reader)[date_index])
+                date_value = next(reader)[date_index]
+                if not isinstance(date_value, str):
+                    date_value = date_value.strftime("%Y-%m-%d")
+                date_list.append(date_value)
             except StopIteration:
                 break
 
@@ -1302,13 +1313,19 @@ def choose_data_set(cashflowtracker, filtered_cashflow):
 
 def get_valid_date():
     while True:
-        date = input("Date (YYYY-MM-DD): ").strip()
-        if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", date):
+        date_str = input("Date (YYYY-MM-DD): ").strip()
+        if not re.match(r"^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$", date_str):
             print("Invalid date format. Please enter a valid date.")
             print()
             continue
-        return date
+        try:
+            date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            return date
+        except ValueError:
+            print("Invalid date. Please enter a valid date.")
 
+        return date
+    
 
 def get_category(categories):
     if categories == {""}:
