@@ -1,6 +1,8 @@
 import pytest
 from datetime import datetime
 from project import CashFlowTracker, Transaction, check_date_format, export_data, group_uncategorized, group_by_month, read_csv
+import os
+import re
 
 
 @pytest.fixture
@@ -69,21 +71,55 @@ def test_group_uncategorized(cashflowtracker):
 
 
 def test_export_data(cashflowtracker):
-    filename = "test_export.csv"
+    filename = "test_export"
     message = export_data(cashflowtracker, filename)
+    pattern = re.compile(rf"({re.escape(filename)}(\(\d+\))?\.csv) exported successfully\.")
+
+    assert os.path.exists("test_export.csv"), "test_export.csv was not created."
 
     with open("test_export.csv", "r") as file:
         lines = file.readlines()
         assert len(lines) == 6
         assert lines[0] == "Date,Category,Description,Value\n"
-        assert lines[1] == "2024-01-01,,Salary,2500.0\n"
-        assert lines[2] == "2024-02-02,,Walmart,-120.5\n"
-        assert lines[3] == "2024-02-05,Food,Restaurant,-50.0\n"
-        assert lines[4] == "2024-02-10,,Walmart,-100.0\n"
-        assert lines[5] == "2024-03-01,Rent,Rent,-1000.0\n"
+        assert lines[1] == "2024-01-01,,Salary,2500.00\n"
+        assert lines[2] == "2024-02-02,,Walmart,-120.50\n"
+        assert lines[3] == "2024-02-05,Food,Restaurant,-50.00\n"
+        assert lines[4] == "2024-02-10,,Walmart,-100.00\n"
+        assert lines[5] == "2024-03-01,Rent,Rent,-1000.00\n"
 
-    assert message == f"{filename} exported successfully."
-    
+    match = re.match(pattern, message)
+
+    assert match, f"Expected message to match pattern '{pattern.pattern}', but got '{message}'"
+
+    if match:
+        created_filename = match.group(1)
+        os.remove(created_filename)
+    else:
+        raise AssertionError(f"Filename could not be extracted from message: '{message}'")
+
+
+def test_export_data_str_input():
+    data = "Test string"
+    filename = "test_str_export"
+    message = export_data(data, filename)
+    pattern = re.compile(rf"({re.escape(filename)}(\(\d+\))?\.txt) exported successfully\.")
+
+    assert os.path.exists(f"{filename}.txt"), f"{filename}.txt was not created."
+
+    with open(f"{filename}.txt", "r") as file:
+        content = file.read()
+        assert content == data, f"Expected file content to be '{data}', but got '{content}'"
+
+    match = re.match(pattern, message)
+
+    assert match, f"Expected message to match pattern '{pattern.pattern}', but got '{message}'"
+
+    if match:
+        created_filename = match.group(1)
+        os.remove(created_filename)
+    else:
+        raise AssertionError(f"Filename could not be extracted from message: '{message}'")
+
 
 def test_export_data_invalid_filename(cashflowtracker):
     with pytest.raises(ValueError, match="Invalid file name. Please choose a name that contains only alphanumeric characters, underscores, or hyphens."):

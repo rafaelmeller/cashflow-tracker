@@ -1,1 +1,6 @@
 TODO.txt
+cashflowtracker.csv
+filtered_cashflow.csv
+venv/
+__pycache__/
+.pytest_cache/
