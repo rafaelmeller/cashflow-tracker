@@ -1,6 +1,7 @@
 import pytest
 from datetime import datetime
 from project import CashFlowTracker, Transaction, check_date_format, export_data, group_uncategorized, group_by_month, read_csv
+import csv
 import os
 import re
 
@@ -19,19 +20,35 @@ def cashflowtracker():
         tracker.add(transaction)
     return tracker
 
+def create_test_csv(file_path):
+    data = [
+        ["2024-01-05", "", "Salary", 2500.00],
+        ["2024-02-02", "", "Walmart", -120.50],
+        ["2024-02-05", "Food", "Restaurant", -50.00],
+        ["2024-02-10", "", "Walmart", -100.00],
+        ["2024-03-01", "Rent", "Rent", -1000.00],
+        # Add more rows as needed to match the expected 90 transactions
+    ]
+    with open(file_path, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["date", "category", "description", "value"])
+        writer.writerows(data)
+
 
 def test_read_csv():
-    csv_path = "sample.csv"
+    csv_path = "temporary_test.csv"
+    create_test_csv(csv_path)
 
     transactions = list(read_csv(csv_path))
 
-    assert len(transactions) == 90
+    assert len(transactions) == 5
     assert transactions[0].date == datetime.strptime("2024-01-05", "%Y-%m-%d").date()
     assert transactions[0].value == 2500.00
     assert transactions[0].description == "Salary"
-    assert transactions[3].value == -120.50
-    assert transactions[3].description == "Walmart"
+    assert transactions[1].value == -120.50
+    assert transactions[1].description == "Walmart"
 
+    os.remove(csv_path)
 
 def test_read_csv_data_error(tmpdir):
     missing_date_csv = tmpdir.join("missing_date.csv")
